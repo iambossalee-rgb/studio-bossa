@@ -42,6 +42,24 @@ function currentLog() {
   return bossaLogs.find(log => log.id === selectedLogId) || null
 }
 
+function renderLogDetailCard(log) {
+  return `
+    <div class="wb-detail-inline" onclick="event.stopPropagation()">
+      <div class="wb-detail-meta">
+        <time>${escapeHtml(formatDate(log.date))}</time>
+        <span>${escapeHtml(log.project || '프로젝트 없음')}</span>
+        <em>${escapeHtml(log.status || '작업중')}</em>
+      </div>
+      <h3>${escapeHtml(log.title)}</h3>
+      <p>${escapeHtml(log.content || '본문이 비어 있습니다.')}</p>
+      <div class="wb-detail-actions">
+        <button onclick="closeLogDetail()">닫기</button>
+        <button onclick="editSelectedLog()">수정하기</button>
+      </div>
+    </div>
+  `
+}
+
 function renderLogs(logs = []) {
   if (!logs.length) {
     return `
@@ -56,17 +74,24 @@ function renderLogs(logs = []) {
     `
   }
 
-  return logs.map(log => `
-    <article class="wb-log ${selectedLogId === log.id ? 'active' : ''}" onclick="openLogDetail('${escapeAttr(log.id)}')">
-      <time>${escapeHtml(formatDate(log.date))}</time>
-      <div>
-        <h4>${escapeHtml(log.title)}</h4>
-        <p>${escapeHtml(logPreview(log))}</p>
-        <small>${escapeHtml(log.project || '프로젝트 없음')}</small>
+  return logs.map(log => {
+    const isSelected = selectedLogId === log.id
+
+    return `
+    <article class="wb-log ${isSelected ? 'active' : ''}" onclick="openLogDetail('${escapeAttr(log.id)}')">
+      <div class="wb-log-summary">
+        <time>${escapeHtml(formatDate(log.date))}</time>
+        <div>
+          <h4>${escapeHtml(log.title)}</h4>
+          <p>${escapeHtml(logPreview(log))}</p>
+          <small>${escapeHtml(log.project || '프로젝트 없음')}</small>
+        </div>
+        <em>${escapeHtml(log.status || '작업중')}</em>
       </div>
-      <em>${escapeHtml(log.status || '작업중')}</em>
+      ${isSelected ? renderLogDetailCard(log) : ''}
     </article>
-  `).join('')
+  `
+  }).join('')
 }
 
 function setMessage(text) {
@@ -99,37 +124,6 @@ function upsertLog(log) {
   ]
   selectedLogId = log.id
   renderLogList()
-  renderLogDetail()
-}
-
-function renderLogDetail() {
-  const detail = document.querySelector('#logDetail')
-  if (!detail) return
-
-  const log = currentLog()
-
-  if (!log) {
-    detail.innerHTML = ''
-    detail.hidden = true
-    return
-  }
-
-  detail.hidden = false
-  detail.innerHTML = `
-    <article class="wb-detail-card">
-      <div class="wb-detail-meta">
-        <time>${escapeHtml(formatDate(log.date))}</time>
-        <span>${escapeHtml(log.project || '프로젝트 없음')}</span>
-        <em>${escapeHtml(log.status || '작업중')}</em>
-      </div>
-      <h3>${escapeHtml(log.title)}</h3>
-      <p>${escapeHtml(log.content || '본문이 비어 있습니다.')}</p>
-      <div class="wb-detail-actions">
-        <button onclick="closeLogDetail()">닫기</button>
-        <button onclick="editSelectedLog()">수정하기</button>
-      </div>
-    </article>
-  `
 }
 
 function setEditingState(log) {
@@ -145,7 +139,6 @@ function setEditingState(log) {
   document.querySelector('#logCancel').hidden = !log
 
   renderLogList()
-  renderLogDetail()
 }
 
 export function workbenchPage() {
@@ -216,8 +209,6 @@ export function workbenchPage() {
           <p id="saveMessage" class="wb-message"></p>
         </section>
 
-        <section id="logDetail" class="wb-detail" hidden></section>
-
         <section class="wb-list">
           <div class="wb-section-head">
             <h3>오늘의 기록</h3>
@@ -269,7 +260,6 @@ window.loadBossaLogs = async function ({ silent = false } = {}) {
 
     bossaLogs = result.logs || []
     renderLogList()
-    renderLogDetail()
   } catch (error) {
     if (list) {
       list.innerHTML = `
@@ -309,14 +299,12 @@ window.openLogDetail = function (id) {
 
   selectedLogId = id
   renderLogList()
-  renderLogDetail()
   setMessage('')
 }
 
 window.closeLogDetail = function () {
   selectedLogId = null
   renderLogList()
-  renderLogDetail()
 }
 
 window.editSelectedLog = function () {

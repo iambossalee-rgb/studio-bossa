@@ -1,3 +1,4 @@
+import { workbenchPage } from './workbench.js'
 import './style.css'
 
 async function loadProjects() {
@@ -128,6 +129,10 @@ window.openLightbox = function(url) {
   document.body.appendChild(lightbox)
 }
 
-loadProjects().then(data => {
-  document.querySelector('#app').innerHTML = homePage(data)
-})
+if (window.location.pathname === '/me') {
+  document.querySelector('#app').innerHTML = workbenchPage()
+} else {
+  loadProjects().then(data => {
+    document.querySelector('#app').innerHTML = homePage(data)
+  })
+}

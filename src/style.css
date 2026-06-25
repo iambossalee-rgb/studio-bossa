@@ -536,7 +536,7 @@ a{
   padding: 28px;
 }
 
-.wb-write input,
+.wb-write > input,
 .wb-write textarea {
   width: 100%;
   border: 0;
@@ -545,7 +545,7 @@ a{
   font: inherit;
 }
 
-.wb-write input {
+.wb-write > input {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 18px;
@@ -631,7 +631,7 @@ a{
   letter-spacing: -.055em;
 }
 
-.wb-detail-inline p {
+.wb-detail-body {
   margin: 0;
   color: #333;
   line-height: 1.8;
@@ -705,7 +705,7 @@ a{
   overflow: hidden;
 }
 
-.wb-list .wb-detail-inline p {
+.wb-list .wb-detail-body {
   color: #333;
   display: block;
   -webkit-line-clamp: unset;
@@ -773,7 +773,7 @@ a{
     padding: 20px;
   }
 
-  .wb-write input {
+  .wb-write > input {
     font-size: 23px;
   }
 
@@ -790,6 +790,7 @@ a{
   }
 
   .wb-field-row select,
+  .wb-field-row input,
   .wb-check {
     width: 100%;
     min-width: 0;
@@ -870,6 +871,7 @@ a{
 }
 
 .wb-field-row select,
+.wb-field-row input,
 .wb-check {
   border: 1px solid #d8d1c5;
   background: #fffdf8;

@@ -1,4 +1,5 @@
 let bossaLogs = []
+let bossaProjectOptions = []
 let selectedLogId = null
 let editingLogId = null
 
@@ -51,7 +52,7 @@ function renderLogDetailCard(log) {
         <em>${escapeHtml(log.status || '작업중')}</em>
       </div>
       <h3>${escapeHtml(log.title)}</h3>
-      <p>${escapeHtml(log.content || '본문이 비어 있습니다.')}</p>
+      <div class="wb-detail-body">${escapeHtml(log.content || '본문이 비어 있습니다.')}</div>
       <div class="wb-detail-actions">
         <button onclick="closeLogDetail()">닫기</button>
         <button onclick="editSelectedLog()">수정하기</button>
@@ -100,19 +101,28 @@ function setMessage(text) {
 }
 
 function setSelectValue(selector, value) {
-  const select = document.querySelector(selector)
-  if (!select) return
+  const field = document.querySelector(selector)
+  if (!field) return
 
-  if (value && !Array.from(select.options).some(option => option.value === value)) {
-    select.add(new Option(value, value))
+  if (field.tagName === 'SELECT' && value && !Array.from(field.options).some(option => option.value === value)) {
+    field.add(new Option(value, value))
   }
 
-  select.value = value || ''
+  field.value = value || ''
 }
 
 function renderLogList(logs = bossaLogs) {
   const list = document.querySelector('#logList')
   if (list) list.innerHTML = renderLogs(logs)
+}
+
+function renderProjectOptions() {
+  const options = document.querySelector('#logProjectOptions')
+  if (!options) return
+
+  options.innerHTML = bossaProjectOptions
+    .map(project => `<option value="${escapeAttr(project.name)}"></option>`)
+    .join('')
 }
 
 function upsertLog(log) {
@@ -124,6 +134,11 @@ function upsertLog(log) {
   ]
   selectedLogId = log.id
   renderLogList()
+
+  if (log.project && !bossaProjectOptions.some(project => project.name === log.project)) {
+    bossaProjectOptions = [...bossaProjectOptions, { name: log.project }]
+    renderProjectOptions()
+  }
 }
 
 function setEditingState(log) {
@@ -177,13 +192,8 @@ export function workbenchPage() {
           <textarea id="logContent" placeholder="생각, 아이디어, 회의 메모, 오늘의 장면..."></textarea>
 
           <div class="wb-field-row">
-            <select id="logProject">
-              <option value="">프로젝트 선택</option>
-              <option value="Studio BOSSA">Studio BOSSA</option>
-              <option value="초로록">초로록</option>
-              <option value="미구">미구</option>
-              <option value="죽어도 안 죽어지는">죽어도 안 죽어지는</option>
-            </select>
+            <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
+            <datalist id="logProjectOptions"></datalist>
 
             <select id="logStatus">
               <option value="작업중">작업중</option>
@@ -233,6 +243,7 @@ export function workbenchPage() {
 
 export function initWorkbench() {
   loadBossaLogs()
+  loadProjectOptions()
 }
 
 window.loadBossaLogs = async function ({ silent = false } = {}) {
@@ -273,6 +284,22 @@ window.loadBossaLogs = async function ({ silent = false } = {}) {
         </article>
       `
     }
+  }
+}
+
+window.loadProjectOptions = async function () {
+  try {
+    const response = await fetch('/api/log-options')
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '프로젝트 옵션을 불러오지 못했습니다')
+    }
+
+    bossaProjectOptions = result.projects || []
+    renderProjectOptions()
+  } catch (error) {
+    setMessage(`프로젝트 옵션 로드 실패: ${error.message}`)
   }
 }
 
@@ -362,6 +389,7 @@ window.createBossaLog = async function () {
 
     upsertLog(result.log)
     await loadBossaLogs({ silent: true })
+    await loadProjectOptions()
   } catch (error) {
     message.textContent = `저장 실패: ${error.message}`
   }

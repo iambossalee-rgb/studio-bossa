@@ -4,8 +4,6 @@ let bossaTypeOptions = []
 let bossaTagOptions = []
 let selectedLogId = null
 let editingLogId = null
-let workbenchView = 'all'
-let workbenchFilter = null
 
 function escapeHtml(text = '') {
   return String(text)
@@ -52,41 +50,6 @@ function parseTags(value = '') {
 
 function currentLog() {
   return bossaLogs.find(log => log.id === selectedLogId) || null
-}
-
-function groupName(value) {
-  return value || '미분류'
-}
-
-function viewLabel() {
-  if (workbenchFilter) return workbenchFilter.value
-  if (workbenchView === 'type') return '유형'
-  if (workbenchView === 'project') return '프로젝트'
-  return '전체'
-}
-
-function filteredLogs() {
-  if (!workbenchFilter) return bossaLogs
-
-  return bossaLogs.filter(log => groupName(log[workbenchFilter.kind]) === workbenchFilter.value)
-}
-
-function groupLogs(logs, key) {
-  const groups = new Map()
-
-  for (const log of logs) {
-    const name = groupName(log[key])
-    if (!groups.has(name)) groups.set(name, [])
-    groups.get(name).push(log)
-  }
-
-  return [...groups.entries()]
-    .map(([name, items]) => ({ name, items }))
-    .sort((a, b) => {
-      if (a.name === '미분류') return 1
-      if (b.name === '미분류') return -1
-      return new Date(b.items[0]?.date || 0) - new Date(a.items[0]?.date || 0)
-    })
 }
 
 function renderMetaChips(log) {
@@ -163,78 +126,6 @@ function renderLogs(logs = []) {
   }).join('')
 }
 
-function renderViewTabs() {
-  const tabs = [
-    ['all', '전체'],
-    ['type', '유형'],
-    ['project', '프로젝트'],
-  ]
-
-  return `
-    <div class="wb-view-tabs">
-      ${tabs.map(([view, label]) => `
-        <button class="${workbenchView === view ? 'active' : ''}" onclick="setWorkbenchView('${view}')">${label}</button>
-      `).join('')}
-    </div>
-  `
-}
-
-function renderFilterHeader() {
-  return `
-    <div class="wb-filter-head">
-      <div>
-        <h4>${escapeHtml(viewLabel())}</h4>
-        <small>${filteredLogs().length} records</small>
-      </div>
-      ${workbenchFilter ? `<button onclick="clearWorkbenchFilter()">전체 보기</button>` : ''}
-    </div>
-  `
-}
-
-function renderGroupCards(kind) {
-  const groups = groupLogs(bossaLogs, kind)
-
-  if (!groups.length) {
-    return renderLogs([])
-  }
-
-  return `
-    <div class="wb-group-grid">
-      ${groups.map(group => `
-        <article class="wb-group-card" onclick="setWorkbenchFilter('${kind}', '${escapeAttr(group.name)}')">
-          <div class="wb-group-top">
-            <h4>${escapeHtml(group.name)}</h4>
-            <span>${group.items.length}</span>
-          </div>
-          <div class="wb-group-recent">
-            ${group.items.slice(0, 3).map(log => `
-              <p>${escapeHtml(log.title)}</p>
-            `).join('')}
-          </div>
-        </article>
-      `).join('')}
-    </div>
-  `
-}
-
-function renderLogBrowser() {
-  const logs = filteredLogs()
-
-  if (workbenchFilter || workbenchView === 'all') {
-    return `
-      ${renderViewTabs()}
-      ${renderFilterHeader()}
-      ${renderLogs(logs)}
-    `
-  }
-
-  return `
-    ${renderViewTabs()}
-    ${renderFilterHeader()}
-    ${renderGroupCards(workbenchView)}
-  `
-}
-
 function setMessage(text) {
   const message = document.querySelector('#saveMessage')
   if (message) message.textContent = text
@@ -251,9 +142,9 @@ function setSelectValue(selector, value) {
   field.value = value || ''
 }
 
-function renderLogList() {
+function renderLogList(logs = bossaLogs) {
   const list = document.querySelector('#logList')
-  if (list) list.innerHTML = renderLogBrowser()
+  if (list) list.innerHTML = renderLogs(logs)
 }
 
 function renderLogDetailHost() {
@@ -268,7 +159,8 @@ function renderWorkbenchLogs(logs = bossaLogs) {
 
 function renderProjectOptions() {
   renderDatalist('#logProjectOptions', bossaProjectOptions)
-  renderDatalist('#logTypeOptions', bossaTypeOptions)
+  renderSelectOptions('#logType', bossaTypeOptions, '유형')
+  renderTagSelectOptions()
   renderDatalist('#logTagOptions', bossaTagOptions)
 }
 
@@ -279,6 +171,43 @@ function renderDatalist(selector, items) {
   options.innerHTML = items
     .map(item => `<option value="${escapeAttr(item.name)}"></option>`)
     .join('')
+}
+
+function renderSelectOptions(selector, items, placeholder) {
+  const select = document.querySelector(selector)
+  if (!select) return
+
+  const currentValue = select.value
+  select.innerHTML = `
+    <option value="">${escapeHtml(placeholder)}</option>
+    ${items.map(item => `<option value="${escapeAttr(item.name)}">${escapeHtml(item.name)}</option>`).join('')}
+  `
+  select.value = currentValue
+}
+
+function renderTagSelectOptions() {
+  const select = document.querySelector('#logTagSelect')
+  if (!select) return
+
+  const selectedValues = selectedOptions(select)
+  select.innerHTML = bossaTagOptions
+    .map(tag => `<option value="${escapeAttr(tag.name)}">${escapeHtml(tag.name)}</option>`)
+    .join('')
+
+  setMultiSelectValues('#logTagSelect', selectedValues)
+}
+
+function selectedOptions(field) {
+  return Array.from(field?.selectedOptions || []).map(option => option.value)
+}
+
+function setMultiSelectValues(selector, values = []) {
+  const field = document.querySelector(selector)
+  if (!field) return
+
+  for (const option of field.options) {
+    option.selected = values.includes(option.value)
+  }
 }
 
 function insertTextIntoField(field, text) {
@@ -349,7 +278,8 @@ function setEditingState(log) {
   document.querySelector('#logContent').value = log?.content || ''
   setSelectValue('#logProject', log?.project || '')
   setSelectValue('#logType', log?.type || '')
-  document.querySelector('#logTags').value = (log?.tags || []).join(', ')
+  setMultiSelectValues('#logTagSelect', log?.tags || [])
+  document.querySelector('#logTags').value = ''
   setSelectValue('#logStatus', log?.status || '작업중')
   document.querySelector('#logPublic').checked = Boolean(log?.isPublic)
   document.querySelector('#logSubmit').textContent = log ? '수정하기' : '기록하기'
@@ -397,10 +327,13 @@ export function workbenchPage() {
             <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
             <datalist id="logProjectOptions"></datalist>
 
-            <input id="logType" list="logTypeOptions" placeholder="유형" />
-            <datalist id="logTypeOptions"></datalist>
+            <select id="logType">
+              <option value="">유형</option>
+            </select>
 
-            <input id="logTags" list="logTagOptions" placeholder="태그, 쉼표로 구분" />
+            <select id="logTagSelect" class="wb-tag-select" multiple aria-label="태그 선택"></select>
+
+            <input id="logTags" class="wb-tag-input" list="logTagOptions" placeholder="새 태그, 쉼표로 구분" />
             <datalist id="logTagOptions"></datalist>
 
             <select id="logStatus">
@@ -497,25 +430,6 @@ window.loadBossaLogs = async function ({ silent = false } = {}) {
   }
 }
 
-window.setWorkbenchView = function (view) {
-  workbenchView = view
-  workbenchFilter = null
-  selectedLogId = null
-  renderWorkbenchLogs()
-}
-
-window.setWorkbenchFilter = function (kind, value) {
-  workbenchFilter = { kind, value }
-  selectedLogId = null
-  renderWorkbenchLogs()
-}
-
-window.clearWorkbenchFilter = function () {
-  workbenchFilter = null
-  selectedLogId = null
-  renderWorkbenchLogs()
-}
-
 window.loadProjectOptions = async function () {
   try {
     const response = await fetch('/api/log-options')
@@ -584,7 +498,10 @@ window.createBossaLog = async function () {
   const content = document.querySelector('#logContent').value.trim()
   const project = document.querySelector('#logProject').value
   const type = document.querySelector('#logType').value.trim()
-  const tags = parseTags(document.querySelector('#logTags').value)
+  const tags = [...new Set([
+    ...selectedOptions(document.querySelector('#logTagSelect')),
+    ...parseTags(document.querySelector('#logTags').value),
+  ])]
   const status = document.querySelector('#logStatus').value
   const isPublic = document.querySelector('#logPublic').checked
   const message = document.querySelector('#saveMessage')
@@ -618,6 +535,7 @@ window.createBossaLog = async function () {
     document.querySelector('#logContent').value = ''
     document.querySelector('#logProject').value = ''
     document.querySelector('#logType').value = ''
+    setMultiSelectValues('#logTagSelect', [])
     document.querySelector('#logTags').value = ''
     document.querySelector('#logPublic').checked = false
     document.querySelector('#logSubmit').textContent = '기록하기'

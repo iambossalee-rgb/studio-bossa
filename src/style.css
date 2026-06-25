@@ -705,6 +705,15 @@ a{
   overflow: hidden;
 }
 
+.wb-list .wb-detail-inline p {
+  color: #333;
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: initial;
+  overflow: visible;
+  white-space: pre-wrap;
+}
+
 .wb-list small {
   display: inline-block;
   margin-top: 10px;

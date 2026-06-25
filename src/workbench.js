@@ -45,21 +45,28 @@ function currentLog() {
 
 function renderLogDetailCard(log) {
   return `
-    <div class="wb-detail-overlay"></div>
-    <div class="wb-detail-inline" onclick="event.stopPropagation()">
-      <div class="wb-detail-meta">
-        <time>${escapeHtml(formatDate(log.date))}</time>
-        <span>${escapeHtml(log.project || '프로젝트 없음')}</span>
-        <em>${escapeHtml(log.status || '작업중')}</em>
-      </div>
-      <h3>${escapeHtml(log.title)}</h3>
-      <div class="wb-detail-body">${escapeHtml(log.content || '본문이 비어 있습니다.')}</div>
-      <div class="wb-detail-actions">
-        <button onclick="closeLogDetail()">닫기</button>
-        <button onclick="editSelectedLog()">수정하기</button>
+    <div class="wb-detail-lightbox">
+      <div class="wb-detail-overlay"></div>
+      <div class="wb-detail-modal" onclick="event.stopPropagation()">
+        <div class="wb-detail-meta">
+          <time>${escapeHtml(formatDate(log.date))}</time>
+          <span>${escapeHtml(log.project || '프로젝트 없음')}</span>
+          <em>${escapeHtml(log.status || '작업중')}</em>
+        </div>
+        <h3>${escapeHtml(log.title)}</h3>
+        <div class="wb-detail-body">${escapeHtml(log.content || '본문이 비어 있습니다.')}</div>
+        <div class="wb-detail-actions">
+          <button onclick="closeLogDetail()">닫기</button>
+          <button onclick="editSelectedLog()">수정하기</button>
+        </div>
       </div>
     </div>
   `
+}
+
+function renderSelectedLogDetail() {
+  const log = currentLog()
+  return log ? renderLogDetailCard(log) : ''
 }
 
 function renderLogs(logs = []) {
@@ -90,7 +97,6 @@ function renderLogs(logs = []) {
         </div>
         <em>${escapeHtml(log.status || '작업중')}</em>
       </div>
-      ${isSelected ? renderLogDetailCard(log) : ''}
     </article>
   `
   }).join('')
@@ -117,6 +123,16 @@ function renderLogList(logs = bossaLogs) {
   if (list) list.innerHTML = renderLogs(logs)
 }
 
+function renderLogDetailHost() {
+  const detailHost = document.querySelector('#logDetailHost')
+  if (detailHost) detailHost.innerHTML = renderSelectedLogDetail()
+}
+
+function renderWorkbenchLogs(logs = bossaLogs) {
+  renderLogList(logs)
+  renderLogDetailHost()
+}
+
 function renderProjectOptions() {
   const options = document.querySelector('#logProjectOptions')
   if (!options) return
@@ -134,7 +150,7 @@ function upsertLog(log) {
     ...bossaLogs.filter(item => item.id !== log.id),
   ]
   selectedLogId = log.id
-  renderLogList()
+  renderWorkbenchLogs()
 
   if (log.project && !bossaProjectOptions.some(project => project.name === log.project)) {
     bossaProjectOptions = [...bossaProjectOptions, { name: log.project }]
@@ -154,7 +170,7 @@ function setEditingState(log) {
   document.querySelector('#logSubmit').textContent = log ? '수정하기' : '기록하기'
   document.querySelector('#logCancel').hidden = !log
 
-  renderLogList()
+  renderWorkbenchLogs()
 }
 
 export function workbenchPage() {
@@ -236,6 +252,7 @@ export function workbenchPage() {
               <em>load</em>
             </article>
           </div>
+          <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         </section>
       </main>
     </div>
@@ -271,7 +288,7 @@ window.loadBossaLogs = async function ({ silent = false } = {}) {
     }
 
     bossaLogs = result.logs || []
-    renderLogList()
+    renderWorkbenchLogs()
   } catch (error) {
     if (list) {
       list.innerHTML = `
@@ -326,13 +343,13 @@ window.openLogDetail = function (id) {
   if (!log) return
 
   selectedLogId = id
-  renderLogList()
+  renderWorkbenchLogs()
   setMessage('')
 }
 
 window.closeLogDetail = function () {
   selectedLogId = null
-  renderLogList()
+  renderWorkbenchLogs()
 }
 
 window.editSelectedLog = function () {

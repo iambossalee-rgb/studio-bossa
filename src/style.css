@@ -599,18 +599,22 @@ a{
 .wb-detail-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 80;
   background: rgba(17, 17, 17, .52);
-  pointer-events: none;
 }
 
-.wb-detail-inline {
-  position: relative;
-  z-index: 50;
+.wb-detail-modal {
+  position: fixed;
+  z-index: 90;
+  top: 50%;
+  left: 50%;
+  width: min(760px, calc(100vw - 48px));
+  max-height: min(76vh, 720px);
+  transform: translate(-50%, -50%);
+  overflow-y: auto;
   background: #fffdf8;
   border: 1px solid #d8d1c5;
   box-shadow: 0 26px 70px rgba(0,0,0,.22);
-  margin: 0 0 22px 108px;
   padding: 26px 28px;
 }
 
@@ -636,7 +640,7 @@ a{
   color: #151515;
 }
 
-.wb-detail-inline h3 {
+.wb-detail-modal h3 {
   margin: 0 0 16px;
   font-size: 30px;
   letter-spacing: -.055em;
@@ -691,12 +695,11 @@ a{
 }
 
 .wb-log.active {
-  z-index: 45;
+  z-index: 1;
 }
 
 .wb-log.active .wb-log-summary {
   position: relative;
-  z-index: 50;
   background: #fffdf8;
   padding-left: 12px;
   padding-right: 12px;
@@ -723,7 +726,7 @@ a{
   overflow: hidden;
 }
 
-.wb-list .wb-detail-body {
+.wb-detail-modal .wb-detail-body {
   color: #333;
   display: block;
   -webkit-line-clamp: unset;
@@ -848,12 +851,14 @@ a{
     grid-column: 2 / -1;
   }
 
-  .wb-detail-inline {
-    margin: 0 0 18px;
+  .wb-detail-modal {
+    top: 44%;
+    width: calc(100vw - 32px);
+    max-height: 78vh;
     padding: 20px;
   }
 
-  .wb-detail-inline h3 {
+  .wb-detail-modal h3 {
     font-size: 25px;
   }
 

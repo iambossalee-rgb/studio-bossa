@@ -653,6 +653,77 @@ a{
   white-space: pre-wrap;
 }
 
+.wb-detail-title-input,
+.wb-detail-body-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #151515;
+  font: inherit;
+}
+
+.wb-detail-title-input {
+  margin: 0 0 16px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -.055em;
+}
+
+.wb-detail-body-input {
+  min-height: 220px;
+  resize: vertical;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.wb-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #d8d1c5;
+}
+
+.wb-detail-fields input,
+.wb-detail-fields select,
+.wb-detail-fields .wb-check {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d8d1c5;
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.wb-detail-fields select[multiple],
+.wb-detail-fields .wb-tag-input,
+.wb-detail-fields .wb-check {
+  grid-column: 1 / -1;
+}
+
+.wb-detail-fields select[multiple] {
+  min-height: 86px;
+}
+
+.wb-detail-fields .wb-check input {
+  width: auto;
+  min-width: auto;
+}
+
+.wb-detail-fields input:disabled,
+.wb-detail-fields select:disabled {
+  color: #555;
+  opacity: 1;
+}
+
+.wb-detail-fields .wb-check:has(input:disabled) {
+  color: #555;
+}
+
 .wb-detail-actions {
   display: flex;
   justify-content: flex-end;
@@ -870,6 +941,18 @@ a{
     font-size: 25px;
   }
 
+  .wb-detail-title-input {
+    font-size: 25px;
+  }
+
+  .wb-detail-body-input {
+    min-height: 190px;
+  }
+
+  .wb-detail-fields {
+    grid-template-columns: 1fr;
+  }
+
   .wb-detail-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -913,6 +996,11 @@ a{
 
 .wb-field-row select[multiple] {
   min-height: 86px;
+}
+
+#logProject {
+  flex: 1 1 100%;
+  grid-column: 1 / -1;
 }
 
 .wb-tag-select,

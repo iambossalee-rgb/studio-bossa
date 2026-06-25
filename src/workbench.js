@@ -1,3 +1,104 @@
+let bossaLogs = []
+let editingLogId = null
+
+function escapeHtml(text = '') {
+  return String(text)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
+function escapeAttr(text = '') {
+  return escapeHtml(text).replaceAll("'", '&#039;')
+}
+
+function todayLabel() {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).format(new Date())
+}
+
+function formatDate(date) {
+  if (!date) return ''
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date))
+}
+
+function logPreview(log) {
+  return log.preview || log.content || '본문이 비어 있습니다.'
+}
+
+function renderLogs(logs = []) {
+  if (!logs.length) {
+    return `
+      <article class="wb-empty">
+        <time>오늘</time>
+        <div>
+          <h4>아직 기록이 없습니다</h4>
+          <p>위 입력창에 오늘의 생각을 남기면 이곳에 쌓입니다.</p>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return logs.map(log => `
+    <article class="wb-log ${editingLogId === log.id ? 'active' : ''}" onclick="openLogForEditing('${escapeAttr(log.id)}')">
+      <time>${escapeHtml(formatDate(log.date))}</time>
+      <div>
+        <h4>${escapeHtml(log.title)}</h4>
+        <p>${escapeHtml(logPreview(log))}</p>
+        <small>${escapeHtml(log.project || '프로젝트 없음')}</small>
+      </div>
+      <em>${escapeHtml(log.status || '작업중')}</em>
+    </article>
+  `).join('')
+}
+
+function setMessage(text) {
+  const message = document.querySelector('#saveMessage')
+  if (message) message.textContent = text
+}
+
+function setSelectValue(selector, value) {
+  const select = document.querySelector(selector)
+  if (!select) return
+
+  if (value && !Array.from(select.options).some(option => option.value === value)) {
+    select.add(new Option(value, value))
+  }
+
+  select.value = value || ''
+}
+
+function renderLogList(logs = bossaLogs) {
+  const list = document.querySelector('#logList')
+  if (list) list.innerHTML = renderLogs(logs)
+}
+
+function setEditingState(log) {
+  editingLogId = log?.id || null
+
+  document.querySelector('#logTitle').value = log?.title || ''
+  document.querySelector('#logContent').value = log?.content || ''
+  setSelectValue('#logProject', log?.project || '')
+  setSelectValue('#logStatus', log?.status || '작업중')
+  document.querySelector('#logPublic').checked = Boolean(log?.isPublic)
+  document.querySelector('#logSubmit').textContent = log ? '수정하기' : '기록하기'
+  document.querySelector('#logCancel').hidden = !log
+
+  renderLogList()
+}
+
 export function workbenchPage() {
   return `
     <div class="workbench">
@@ -20,7 +121,7 @@ export function workbenchPage() {
 
       <main class="wb-main">
         <header class="wb-top">
-          <span>2026.06.25 WED</span>
+          <span>${todayLabel()}</span>
           <button onclick="goHome()">Gallery 보기</button>
         </header>
 
@@ -59,7 +160,8 @@ export function workbenchPage() {
             <span>이미지</span>
             <span>음성</span>
             <span># 태그</span>
-            <button onclick="createBossaLog()">기록하기</button>
+            <button id="logCancel" class="wb-secondary-action" onclick="cancelLogEditing()" hidden>취소</button>
+            <button id="logSubmit" onclick="createBossaLog()">기록하기</button>
           </div>
 
           <p id="saveMessage" class="wb-message"></p>
@@ -71,18 +173,79 @@ export function workbenchPage() {
             <small>recent</small>
           </div>
 
-          <article>
-            <time>방금</time>
-            <div>
-              <h4>이제부터 기록이 Notion에 저장됩니다</h4>
-              <p>위 입력창에 기록을 남기고 저장하면 BOSSA Log 데이터베이스로 들어갑니다.</p>
-            </div>
-            <em>v0.1</em>
-          </article>
+          <div id="logList">
+            <article class="wb-empty">
+              <time>로딩</time>
+              <div>
+                <h4>기록을 불러오는 중입니다</h4>
+                <p>Notion에서 최근 기록을 가져오고 있습니다.</p>
+              </div>
+              <em>load</em>
+            </article>
+          </div>
         </section>
       </main>
     </div>
   `
+}
+
+export function initWorkbench() {
+  loadBossaLogs()
+}
+
+window.loadBossaLogs = async function () {
+  const list = document.querySelector('#logList')
+  if (list) {
+    list.innerHTML = `
+      <article class="wb-empty">
+        <time>로딩</time>
+        <div>
+          <h4>기록을 불러오는 중입니다</h4>
+          <p>Notion에서 최근 기록을 가져오고 있습니다.</p>
+        </div>
+        <em>load</em>
+      </article>
+    `
+  }
+
+  try {
+    const response = await fetch('/api/logs')
+    const result = await response.json()
+
+    if (!result.ok) {
+      throw new Error(result.error || '기록을 불러오지 못했습니다')
+    }
+
+    bossaLogs = result.logs || []
+    renderLogList()
+  } catch (error) {
+    if (list) {
+      list.innerHTML = `
+        <article class="wb-empty">
+          <time>오류</time>
+          <div>
+            <h4>기록을 불러오지 못했습니다</h4>
+            <p>${escapeHtml(error.message)}</p>
+          </div>
+          <em>error</em>
+        </article>
+      `
+    }
+  }
+}
+
+window.openLogForEditing = function (id) {
+  const log = bossaLogs.find(item => item.id === id)
+  if (!log) return
+
+  setEditingState(log)
+  setMessage('기록을 편집 중입니다.')
+  document.querySelector('#logTitle').focus()
+}
+
+window.cancelLogEditing = function () {
+  setEditingState(null)
+  setMessage('')
 }
 
 window.createBossaLog = async function () {
@@ -101,10 +264,11 @@ window.createBossaLog = async function () {
   message.textContent = '저장 중...'
 
   try {
+    const method = editingLogId ? 'PATCH' : 'POST'
     const response = await fetch('/api/create-log', {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, project, status, isPublic }),
+      body: JSON.stringify({ id: editingLogId, title, content, project, status, isPublic }),
     })
 
     const result = await response.json()
@@ -114,10 +278,15 @@ window.createBossaLog = async function () {
     }
 
     message.textContent = '저장되었습니다.'
+    editingLogId = null
 
     document.querySelector('#logTitle').value = ''
     document.querySelector('#logContent').value = ''
     document.querySelector('#logPublic').checked = false
+    document.querySelector('#logSubmit').textContent = '기록하기'
+    document.querySelector('#logCancel').hidden = true
+
+    await loadBossaLogs()
   } catch (error) {
     message.textContent = `저장 실패: ${error.message}`
   }

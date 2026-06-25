@@ -20,6 +20,15 @@ function richTextChunks(content = '') {
   return chunks.length ? chunks : [{ text: { content: '' } }]
 }
 
+function multiSelectValues(values = []) {
+  if (!Array.isArray(values)) return []
+
+  return values
+    .map(value => String(value).trim())
+    .filter(Boolean)
+    .map(name => ({ name }))
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'PATCH') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -27,7 +36,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-    const { id, title, content, project, status, isPublic } = body
+    const { id, title, content, project, type, tags, status, isPublic } = body
 
     const properties = {
       기록명: {
@@ -38,6 +47,12 @@ export default async function handler(req, res) {
       },
       프로젝트: {
         select: project ? { name: project } : null,
+      },
+      유형: {
+        select: type ? { name: type } : null,
+      },
+      태그: {
+        multi_select: multiSelectValues(tags),
       },
       상태: {
         select: { name: status || '작업중' },

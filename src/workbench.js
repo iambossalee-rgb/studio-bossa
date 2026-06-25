@@ -1,5 +1,7 @@
 let bossaLogs = []
 let bossaProjectOptions = []
+let bossaTypeOptions = []
+let bossaTagOptions = []
 let selectedLogId = null
 let editingLogId = null
 
@@ -39,8 +41,28 @@ function logPreview(log) {
   return log.preview || log.content || '본문이 비어 있습니다.'
 }
 
+function parseTags(value = '') {
+  return String(value)
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(Boolean)
+}
+
 function currentLog() {
   return bossaLogs.find(log => log.id === selectedLogId) || null
+}
+
+function renderMetaChips(log) {
+  const tags = Array.isArray(log.tags) ? log.tags : []
+  const chips = [
+    log.project || '',
+    log.type || '',
+    ...tags.map(tag => `#${tag}`),
+  ].filter(Boolean)
+
+  return chips.length
+    ? `<div class="wb-log-meta">${chips.map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}</div>`
+    : ''
 }
 
 function renderLogDetailCard(log) {
@@ -51,6 +73,8 @@ function renderLogDetailCard(log) {
         <div class="wb-detail-meta">
           <time>${escapeHtml(formatDate(log.date))}</time>
           <span>${escapeHtml(log.project || '프로젝트 없음')}</span>
+          ${log.type ? `<span>${escapeHtml(log.type)}</span>` : ''}
+          ${(log.tags || []).map(tag => `<span>#${escapeHtml(tag)}</span>`).join('')}
           <em>${escapeHtml(log.status || '작업중')}</em>
         </div>
         <h3>${escapeHtml(log.title)}</h3>
@@ -93,7 +117,7 @@ function renderLogs(logs = []) {
         <div>
           <h4>${escapeHtml(log.title)}</h4>
           <p>${escapeHtml(logPreview(log))}</p>
-          <small>${escapeHtml(log.project || '프로젝트 없음')}</small>
+          ${renderMetaChips(log)}
         </div>
         <em>${escapeHtml(log.status || '작업중')}</em>
       </div>
@@ -134,11 +158,17 @@ function renderWorkbenchLogs(logs = bossaLogs) {
 }
 
 function renderProjectOptions() {
-  const options = document.querySelector('#logProjectOptions')
+  renderDatalist('#logProjectOptions', bossaProjectOptions)
+  renderDatalist('#logTypeOptions', bossaTypeOptions)
+  renderDatalist('#logTagOptions', bossaTagOptions)
+}
+
+function renderDatalist(selector, items) {
+  const options = document.querySelector(selector)
   if (!options) return
 
-  options.innerHTML = bossaProjectOptions
-    .map(project => `<option value="${escapeAttr(project.name)}"></option>`)
+  options.innerHTML = items
+    .map(item => `<option value="${escapeAttr(item.name)}"></option>`)
     .join('')
 }
 
@@ -187,6 +217,19 @@ function upsertLog(log) {
     bossaProjectOptions = [...bossaProjectOptions, { name: log.project }]
     renderProjectOptions()
   }
+
+  if (log.type && !bossaTypeOptions.some(type => type.name === log.type)) {
+    bossaTypeOptions = [...bossaTypeOptions, { name: log.type }]
+    renderProjectOptions()
+  }
+
+  for (const tag of log.tags || []) {
+    if (!bossaTagOptions.some(option => option.name === tag)) {
+      bossaTagOptions = [...bossaTagOptions, { name: tag }]
+    }
+  }
+
+  renderProjectOptions()
 }
 
 function setEditingState(log) {
@@ -196,6 +239,8 @@ function setEditingState(log) {
   document.querySelector('#logTitle').value = log?.title || ''
   document.querySelector('#logContent').value = log?.content || ''
   setSelectValue('#logProject', log?.project || '')
+  setSelectValue('#logType', log?.type || '')
+  document.querySelector('#logTags').value = (log?.tags || []).join(', ')
   setSelectValue('#logStatus', log?.status || '작업중')
   document.querySelector('#logPublic').checked = Boolean(log?.isPublic)
   document.querySelector('#logSubmit').textContent = log ? '수정하기' : '기록하기'
@@ -242,6 +287,12 @@ export function workbenchPage() {
           <div class="wb-field-row">
             <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
             <datalist id="logProjectOptions"></datalist>
+
+            <input id="logType" list="logTypeOptions" placeholder="유형" />
+            <datalist id="logTypeOptions"></datalist>
+
+            <input id="logTags" list="logTagOptions" placeholder="태그, 쉼표로 구분" />
+            <datalist id="logTagOptions"></datalist>
 
             <select id="logStatus">
               <option value="작업중">작업중</option>
@@ -347,6 +398,8 @@ window.loadProjectOptions = async function () {
     }
 
     bossaProjectOptions = result.projects || []
+    bossaTypeOptions = result.types || []
+    bossaTagOptions = result.tags || []
     renderProjectOptions()
   } catch (error) {
     setMessage(`프로젝트 옵션 로드 실패: ${error.message}`)
@@ -402,6 +455,8 @@ window.createBossaLog = async function () {
   const title = document.querySelector('#logTitle').value.trim()
   const content = document.querySelector('#logContent').value.trim()
   const project = document.querySelector('#logProject').value
+  const type = document.querySelector('#logType').value.trim()
+  const tags = parseTags(document.querySelector('#logTags').value)
   const status = document.querySelector('#logStatus').value
   const isPublic = document.querySelector('#logPublic').checked
   const message = document.querySelector('#saveMessage')
@@ -418,7 +473,7 @@ window.createBossaLog = async function () {
     const response = await fetch('/api/create-log', {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editingLogId, title, content, project, status, isPublic }),
+      body: JSON.stringify({ id: editingLogId, title, content, project, type, tags, status, isPublic }),
     })
 
     const result = await readApiResponse(response)
@@ -433,6 +488,9 @@ window.createBossaLog = async function () {
 
     document.querySelector('#logTitle').value = ''
     document.querySelector('#logContent').value = ''
+    document.querySelector('#logProject').value = ''
+    document.querySelector('#logType').value = ''
+    document.querySelector('#logTags').value = ''
     document.querySelector('#logPublic').checked = false
     document.querySelector('#logSubmit').textContent = '기록하기'
     document.querySelector('#logCancel').hidden = true

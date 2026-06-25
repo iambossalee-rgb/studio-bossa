@@ -18,6 +18,7 @@ export function text(richText = []) {
 function getTitle(prop) { return text(prop?.title) }
 function getText(prop) { return text(prop?.rich_text) }
 function getSelect(prop) { return prop?.select?.name || '' }
+function getMultiSelect(prop) { return prop?.multi_select?.map(option => option.name) || [] }
 function getDate(prop) { return prop?.date?.start || '' }
 function getCheckbox(prop) { return Boolean(prop?.checkbox) }
 
@@ -31,6 +32,8 @@ export function toLog(page) {
     content,
     preview: content.replace(/\s+/g, ' ').trim().slice(0, 120),
     project: getSelect(props['프로젝트']),
+    type: getSelect(props['유형']),
+    tags: getMultiSelect(props['태그']),
     status: getSelect(props['상태']),
     date: getDate(props['날짜']),
     isPublic: getCheckbox(props['공개']),

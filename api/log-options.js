@@ -13,6 +13,16 @@ function selectOptions(prop) {
   }))
 }
 
+function multiSelectOptions(prop) {
+  if (prop?.type !== 'multi_select') return []
+
+  return prop.multi_select.options.map(option => ({
+    id: option.id,
+    name: option.name,
+    color: option.color,
+  }))
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -26,6 +36,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       projects: selectOptions(dataSource.properties['프로젝트']),
+      types: selectOptions(dataSource.properties['유형']),
+      tags: multiSelectOptions(dataSource.properties['태그']),
     })
   } catch (error) {
     return res.status(500).json({

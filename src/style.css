@@ -735,9 +735,17 @@ a{
   white-space: pre-wrap;
 }
 
-.wb-list small {
-  display: inline-block;
+.wb-log-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-top: 10px;
+}
+
+.wb-log-meta span {
+  display: inline-block;
+  border: 1px solid #d8d1c5;
+  padding: 4px 7px;
   color: #777;
   font-size: 12px;
 }

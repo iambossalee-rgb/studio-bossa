@@ -142,6 +142,37 @@ function renderProjectOptions() {
     .join('')
 }
 
+function insertTextIntoField(field, text) {
+  const start = field.selectionStart ?? field.value.length
+  const end = field.selectionEnd ?? field.value.length
+
+  field.setRangeText(text, start, end, 'end')
+
+  try {
+    field.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertFromPaste',
+      data: text,
+    }))
+  } catch {
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+}
+
+function setupEditorPaste() {
+  const editor = document.querySelector('#logContent')
+  if (!editor || editor.dataset.pasteReady === 'true') return
+
+  editor.dataset.pasteReady = 'true'
+  editor.addEventListener('paste', event => {
+    const text = event.clipboardData?.getData('text/plain')
+    if (!text) return
+
+    event.preventDefault()
+    insertTextIntoField(editor, text)
+  })
+}
+
 function upsertLog(log) {
   if (!log?.id) return
 
@@ -260,6 +291,7 @@ export function workbenchPage() {
 }
 
 export function initWorkbench() {
+  setupEditorPaste()
   loadBossaLogs()
   loadProjectOptions()
 }

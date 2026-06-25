@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client'
+import { getLogDataSourceId, toLog } from './log-utils.js'
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
@@ -29,19 +30,21 @@ export default async function handler(req, res) {
       },
     }
 
+    let page
+
     if (req.method === 'PATCH') {
       if (!id) {
         return res.status(400).json({ ok: false, error: 'Missing log id' })
       }
 
-      await notion.pages.update({
+      page = await notion.pages.update({
         page_id: id,
         properties,
       })
     } else {
-      await notion.pages.create({
+      page = await notion.pages.create({
         parent: {
-          data_source_id: process.env.BOSSA_LOG_DATA_SOURCE_ID,
+          data_source_id: getLogDataSourceId(),
         },
         properties: {
           ...properties,
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
       })
     }
 
-    return res.status(200).json({ ok: true })
+    return res.status(200).json({ ok: true, log: toLog(page) })
   } catch (error) {
     return res.status(500).json({
       ok: false,

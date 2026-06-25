@@ -85,6 +85,16 @@ function renderLogList(logs = bossaLogs) {
   if (list) list.innerHTML = renderLogs(logs)
 }
 
+function upsertLog(log) {
+  if (!log?.id) return
+
+  bossaLogs = [
+    log,
+    ...bossaLogs.filter(item => item.id !== log.id),
+  ]
+  renderLogList()
+}
+
 function setEditingState(log) {
   editingLogId = log?.id || null
 
@@ -193,9 +203,9 @@ export function initWorkbench() {
   loadBossaLogs()
 }
 
-window.loadBossaLogs = async function () {
+window.loadBossaLogs = async function ({ silent = false } = {}) {
   const list = document.querySelector('#logList')
-  if (list) {
+  if (list && !silent) {
     list.innerHTML = `
       <article class="wb-empty">
         <time>로딩</time>
@@ -210,7 +220,7 @@ window.loadBossaLogs = async function () {
 
   try {
     const response = await fetch('/api/logs')
-    const result = await response.json()
+    const result = await readApiResponse(response)
 
     if (!result.ok) {
       throw new Error(result.error || '기록을 불러오지 못했습니다')
@@ -232,6 +242,23 @@ window.loadBossaLogs = async function () {
       `
     }
   }
+}
+
+async function readApiResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (!contentType.includes('application/json')) {
+    const text = await response.text()
+    throw new Error(`API 응답 오류 (${response.status}): ${text.slice(0, 120)}`)
+  }
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.error || `API 요청 실패 (${response.status})`)
+  }
+
+  return result
 }
 
 window.openLogForEditing = function (id) {
@@ -271,7 +298,7 @@ window.createBossaLog = async function () {
       body: JSON.stringify({ id: editingLogId, title, content, project, status, isPublic }),
     })
 
-    const result = await response.json()
+    const result = await readApiResponse(response)
 
     if (!result.ok) {
       throw new Error(result.error || '저장 실패')
@@ -286,7 +313,8 @@ window.createBossaLog = async function () {
     document.querySelector('#logSubmit').textContent = '기록하기'
     document.querySelector('#logCancel').hidden = true
 
-    await loadBossaLogs()
+    upsertLog(result.log)
+    await loadBossaLogs({ silent: true })
   } catch (error) {
     message.textContent = `저장 실패: ${error.message}`
   }

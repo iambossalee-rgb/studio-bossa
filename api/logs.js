@@ -1,32 +1,7 @@
 import { Client } from '@notionhq/client'
+import { getLogDataSourceId, toLog } from './log-utils.js'
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
-
-function text(richText = []) {
-  return richText.map(item => item.plain_text).join('')
-}
-
-function getTitle(prop) { return text(prop?.title) }
-function getText(prop) { return text(prop?.rich_text) }
-function getSelect(prop) { return prop?.select?.name || '' }
-function getDate(prop) { return prop?.date?.start || '' }
-function getCheckbox(prop) { return Boolean(prop?.checkbox) }
-
-function toLog(page) {
-  const props = page.properties
-  const content = getText(props['본문'])
-
-  return {
-    id: page.id,
-    title: getTitle(props['기록명']) || '제목 없는 기록',
-    content,
-    preview: content.replace(/\s+/g, ' ').trim().slice(0, 120),
-    project: getSelect(props['프로젝트']),
-    status: getSelect(props['상태']),
-    date: getDate(props['날짜']),
-    isPublic: getCheckbox(props['공개']),
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -35,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await notion.dataSources.query({
-      data_source_id: process.env.BOSSA_LOG_DATA_SOURCE_ID,
+      data_source_id: getLogDataSourceId(),
       page_size: 30,
       sorts: [
         {

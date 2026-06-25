@@ -45,6 +45,7 @@ function currentLog() {
 
 function renderLogDetailCard(log) {
   return `
+    <div class="wb-detail-overlay"></div>
     <div class="wb-detail-inline" onclick="event.stopPropagation()">
       <div class="wb-detail-meta">
         <time>${escapeHtml(formatDate(log.date))}</time>

@@ -596,9 +596,20 @@ a{
   margin-top: 48px;
 }
 
+.wb-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(17, 17, 17, .52);
+  pointer-events: none;
+}
+
 .wb-detail-inline {
+  position: relative;
+  z-index: 50;
   background: #fffdf8;
   border: 1px solid #d8d1c5;
+  box-shadow: 0 26px 70px rgba(0,0,0,.22);
   margin: 0 0 22px 108px;
   padding: 26px 28px;
 }
@@ -675,10 +686,17 @@ a{
 }
 
 .wb-log {
+  position: relative;
   cursor: pointer;
 }
 
+.wb-log.active {
+  z-index: 45;
+}
+
 .wb-log.active .wb-log-summary {
+  position: relative;
+  z-index: 50;
   background: #fffdf8;
   padding-left: 12px;
   padding-right: 12px;

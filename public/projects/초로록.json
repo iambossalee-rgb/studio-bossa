@@ -1,0 +1,249 @@
+{
+  "id": "3833ef62-fd66-80a8-88c5-e78dfbcd9a8c",
+  "slug": "초로록",
+  "title": "초로록",
+  "brand": "저푸른그래픽스",
+  "category": "Branding",
+  "year": "",
+  "summary": "실과 자연을 좋아하는 사람을 위한 공예 브랜드",
+  "image": "https://prod-files-secure.s3.us-west-2.amazonaws.com/10fced01-280f-4192-a5d2-ec87feaf27a1/3223033c-c19c-482e-8ff2-358afcfab8f3/%E1%84%87%E1%85%B3%E1%84%85%E1%85%A2%E1%86%AB%E1%84%83%E1%85%B5%E1%86%BC-03.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466RO75FIEA%2F20260625%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20260625T050753Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEHwaCXVzLXdlc3QtMiJIMEYCIQDFUBNYiZhL3Sp0sBf%2Bp3yNZukohBoP%2BseQ4xlt2eF4eAIhAJz6P8zlQc8oqHPzluw2t5uHGUwd%2F5t82fOquIFIG9%2FdKv8DCEQQABoMNjM3NDIzMTgzODA1Igyfnutw%2FMo9xXc3hFEq3AM8v7V2dF1RRsNEoHOsJ1QHyt%2FCWHSuVbnOhwy12S5apwOQsZpy5utAN2qkhd8VI5Z54Z2D9Q23AXt82Yew1epFdsUeqQesE%2F5pE%2BlUom66c4TsvDfg0DXiy%2BJcDA1PWBkyr6Jdsyx%2BtQIcBiVAdZPm%2Bn2gLdTVlYXT0tv8wfByCQxEiB2p4gc0mnhFnZhv%2FRycWI8CAfshUynfniOn9sxXOxavLUZXh8HE9vXoHJFCmxhWWwVmoDeXv5JpqzXmVH61ELI%2FE5IgF2RH1E8oVZUnOBAikJq1M%2F%2FF9sOHrCT67B85wKeisYCPhIlyimEHavHPM8EpFGdigHVdRQ3Sq9WkVbOhZ%2FJFacGXtALKnwn6pK5MG9qBILvmf0KfsUBFhNpge9qzyfSM7OLuaHLML311jNK2RnBRlLDPdukeAzNxGaWCT0ZNe6t2ySgWvk4pCaSIPl5GiS%2FZzYhe5E%2FiKgAC9q9TZ6hIYuTTADzP1mdjMVFW73sOdhE%2FTggr3u2YMPvekxTUWJ%2Fa0LcXcxGhYBN%2FBAW8TEZPgxIbsJRtuXvSLMzamw2DAE8pr8DctELD6s7rtGFoNmOio5ew9S9PQlco6l0b5qRn51Rsseipo8sETOt4ZrvxzdShuj762jDru%2FLRBjqkAXUWxoEJ1xZANcN5Em7RGzqbaw9hRjg%2FvHoLxKYxCOmTm3Jp9kjbaB2OjxtX%2F8Xj8iC%2FO5xBaYNKmD9pRN9%2FWf3t21J2txCSr0O2RE6nfPvJE7OV2ySdLJS5iFY0rulp2%2FID92jFarjExBzUhxoO5mtMc8HuOT5%2FgnJjFpcvxQZhUV9iN7TV0BU5cwo9HH3B%2BhxxDKWp7J8uo6%2FmRZ9SwSCtIXuP&X-Amz-Signature=a483b60b7ca03167ab9d4bcbbf5b981206a672328ac1d0f06b16837c132d4df9&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+  "public": true,
+  "blocks": [
+    {
+      "type": "heading_1",
+      "text": "프로젝트 개요"
+    },
+    {
+      "type": "paragraph",
+      "text": "초로록은 실과 자연을 좋아하는 사람을 위한 공예 브랜드입니다.\n이 프로젝트는 네이밍, 로고, 명함, 마이크로사이트, 패키지까지 이어지는 작은 브랜드 구축 과정입니다."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "1. 프로젝트 배경"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "의뢰자는 어떤 사람인가?"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "어떤 문제나 필요에서 시작되었는가?"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "기존에 가지고 있던 이미지나 분위기는 무엇인가?"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "이 프로젝트에서 가장 중요하게 지켜야 할 태도는 무엇인가?"
+    },
+    {
+      "type": "paragraph",
+      "text": "작성 예시:\n공예 작업을 기반으로 작은 브랜드를 준비하는 과정에서, 이름과 시각 정체성이 아직 정리되지 않은 상태였다. 손작업의 따뜻함, 자연의 이미지, 실과 바느질의 감각을 브랜드 안에 담는 것이 핵심이었다."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "2. 핵심 키워드"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "자연"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "실"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "바느질"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "손작업"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "초록"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "작고 다정한 브랜드"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "직접 만든 물성"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "3. 진행 기록 Timeline"
+    },
+    {
+      "type": "heading_3",
+      "text": "2026.05 · 첫 미팅"
+    },
+    {
+      "type": "paragraph",
+      "text": "브랜드의 성격, 고객, 사용 장면을 정리했다. 공예와 자연, 실의 이미지를 중심으로 방향을 잡았다."
+    },
+    {
+      "type": "heading_3",
+      "text": "2026.05 · 네이밍"
+    },
+    {
+      "type": "paragraph",
+      "text": "여러 후보 중 ‘초로록’을 선택했다. 발음의 생동감과 초록의 이미지를 함께 가져갈 수 있었다."
+    },
+    {
+      "type": "heading_3",
+      "text": "2026.06 · 로고 시안"
+    },
+    {
+      "type": "paragraph",
+      "text": "실, 잎, 스티치 구조를 실험하며 워드마크와 심볼의 가능성을 비교했다."
+    },
+    {
+      "type": "heading_3",
+      "text": "2026.06 · 명함 제작"
+    },
+    {
+      "type": "paragraph",
+      "text": "종이와 후가공, QR 연결 방식을 검토하며 첫 실물 접점을 만들었다."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "4. 이미지 갤러리"
+    },
+    {
+      "type": "heading_3",
+      "text": "이미지 1"
+    },
+    {
+      "type": "image",
+      "url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/10fced01-280f-4192-a5d2-ec87feaf27a1/f4acfb7e-203a-4628-9842-a94181852d57/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_A4_%E1%84%80%E1%85%A1%E1%84%85%E1%85%A9_%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A5.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466Z4UCQMBF%2F20260625%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20260625T050754Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEHwaCXVzLXdlc3QtMiJIMEYCIQDszGAfxmxBC77yhsFMLww6qhB9oGN0wehECYChUGxGBgIhAOYXl%2F5862xvXgBQ9EobnnaPsFkxgosvV2gDLih%2BrmH0Kv8DCEUQABoMNjM3NDIzMTgzODA1IgxkhuWRywaaOa5OV58q3APTN97u8zzCgYVeb%2BiTjaegIwzYKCk02CFRFVpUb5FQpFxsNIZxBuHt%2FHAjWFSnaGoumrxm3muACkt%2FIqRuDUbbSt2TpFbvDm1tmSXLLkBGzTpYESZljuMQ6roCX%2BYGtitdzOIikXNJWMHOnpBlmb1TjYaTGPar0HI0C0ofS8dXzYatiX1rQEKvJuQMOtKgBxk1l67pL9P%2BA%2BiowXkOAxqdvgfgc50XyXOJ7HDai%2F40xtVyQIzxwgIsZgBPWXDkEJMIE%2BIVJwjUiwCyZejTWwULUnhAYu1%2BO4KwjSGfJop0fLKbcwitWvD8RBsclnJqRuPYoaQSyPu4Axuh1jztbTxUIu%2FPgoLLuowpFcP%2B%2F1wHPz0Z%2FaMXYREBRanhUNfCKvLdLQjdnehmP6s%2BBbY%2FYnAgWQtTdD48cImb%2BZJDtqzyU5FlFM%2B%2BnjnN3JWMKQvmyzCFuoa%2FGWzXJi6luL6d8ztMScL1YSgzqrSQcY%2BzX3%2BwD1tDN%2BKNnqbZgP%2BRQ0X2Jo7nUUtHCvpM9fHYgcmOqzIkjmMXE8ZjHXr79FD8l9kjoo5HwY2hIEcnxnzxCcU2t34boSzErxm0F1ENM6nM9hY35X9I6E3E5PQ%2FxrQ4Cvd4I1EYrmRtBUHkemISOzDuvvLRBjqkAX6FALK9fkldY%2FvfoToV3Li7VrqcsqNOclY6UI86zCyLiRA5WK7MjEixnfX1%2Bm9dsmbrkB8ZhODOoTkgxPOooWIVu48L7CeDh7mjqXniw0R4sUX9aqNEqV7Bg65rxRqu8nu5gZ%2FLeze9GhtaXCuGNqHvbGF5tbzAYYtWKgcSwdClcgDbpUzvN%2FBRGjONnfaox%2BCmO7FGsReoNTaE6jF9kCNh1I1w&X-Amz-Signature=dc0f502835a34524fa1b92b78eade9a068feb14958afd09009ad7b32faee30ac&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "caption": ""
+    },
+    {
+      "type": "paragraph",
+      "text": "캡션:\n초기 로고 시안. 실과 잎의 이미지를 연결해 브랜드의 방향을 탐색했다."
+    },
+    {
+      "type": "heading_3",
+      "text": "이미지 2"
+    },
+    {
+      "type": "image",
+      "url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/10fced01-280f-4192-a5d2-ec87feaf27a1/dfd07ca5-7746-4005-b982-17fb1458dde8/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%89%E1%85%A1%E1%84%80%E1%85%A1%E1%86%A8_%E1%84%87%E1%85%B3%E1%86%AF%E1%84%85%E1%85%A2%E1%86%A8.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466Z4UCQMBF%2F20260625%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20260625T050754Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEHwaCXVzLXdlc3QtMiJIMEYCIQDszGAfxmxBC77yhsFMLww6qhB9oGN0wehECYChUGxGBgIhAOYXl%2F5862xvXgBQ9EobnnaPsFkxgosvV2gDLih%2BrmH0Kv8DCEUQABoMNjM3NDIzMTgzODA1IgxkhuWRywaaOa5OV58q3APTN97u8zzCgYVeb%2BiTjaegIwzYKCk02CFRFVpUb5FQpFxsNIZxBuHt%2FHAjWFSnaGoumrxm3muACkt%2FIqRuDUbbSt2TpFbvDm1tmSXLLkBGzTpYESZljuMQ6roCX%2BYGtitdzOIikXNJWMHOnpBlmb1TjYaTGPar0HI0C0ofS8dXzYatiX1rQEKvJuQMOtKgBxk1l67pL9P%2BA%2BiowXkOAxqdvgfgc50XyXOJ7HDai%2F40xtVyQIzxwgIsZgBPWXDkEJMIE%2BIVJwjUiwCyZejTWwULUnhAYu1%2BO4KwjSGfJop0fLKbcwitWvD8RBsclnJqRuPYoaQSyPu4Axuh1jztbTxUIu%2FPgoLLuowpFcP%2B%2F1wHPz0Z%2FaMXYREBRanhUNfCKvLdLQjdnehmP6s%2BBbY%2FYnAgWQtTdD48cImb%2BZJDtqzyU5FlFM%2B%2BnjnN3JWMKQvmyzCFuoa%2FGWzXJi6luL6d8ztMScL1YSgzqrSQcY%2BzX3%2BwD1tDN%2BKNnqbZgP%2BRQ0X2Jo7nUUtHCvpM9fHYgcmOqzIkjmMXE8ZjHXr79FD8l9kjoo5HwY2hIEcnxnzxCcU2t34boSzErxm0F1ENM6nM9hY35X9I6E3E5PQ%2FxrQ4Cvd4I1EYrmRtBUHkemISOzDuvvLRBjqkAX6FALK9fkldY%2FvfoToV3Li7VrqcsqNOclY6UI86zCyLiRA5WK7MjEixnfX1%2Bm9dsmbrkB8ZhODOoTkgxPOooWIVu48L7CeDh7mjqXniw0R4sUX9aqNEqV7Bg65rxRqu8nu5gZ%2FLeze9GhtaXCuGNqHvbGF5tbzAYYtWKgcSwdClcgDbpUzvN%2FBRGjONnfaox%2BCmO7FGsReoNTaE6jF9kCNh1I1w&X-Amz-Signature=bcf97781ca6f3b9ce17bde7a58154ad0dc013b802c9e63192ebe388676ada4cc&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "caption": ""
+    },
+    {
+      "type": "paragraph",
+      "text": "캡션:\n명함 적용 테스트. 작은 브랜드가 처음 만나는 실물 접점으로서 종이와 여백을 함께 검토했다."
+    },
+    {
+      "type": "heading_3",
+      "text": "이미지 3"
+    },
+    {
+      "type": "image",
+      "url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/10fced01-280f-4192-a5d2-ec87feaf27a1/c3c549d6-2c6c-425a-8699-aa050cb4b93f/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_A4_%E1%84%89%E1%85%A6%E1%84%85%E1%85%A9_%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A5.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466Z4UCQMBF%2F20260625%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20260625T050754Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEHwaCXVzLXdlc3QtMiJIMEYCIQDszGAfxmxBC77yhsFMLww6qhB9oGN0wehECYChUGxGBgIhAOYXl%2F5862xvXgBQ9EobnnaPsFkxgosvV2gDLih%2BrmH0Kv8DCEUQABoMNjM3NDIzMTgzODA1IgxkhuWRywaaOa5OV58q3APTN97u8zzCgYVeb%2BiTjaegIwzYKCk02CFRFVpUb5FQpFxsNIZxBuHt%2FHAjWFSnaGoumrxm3muACkt%2FIqRuDUbbSt2TpFbvDm1tmSXLLkBGzTpYESZljuMQ6roCX%2BYGtitdzOIikXNJWMHOnpBlmb1TjYaTGPar0HI0C0ofS8dXzYatiX1rQEKvJuQMOtKgBxk1l67pL9P%2BA%2BiowXkOAxqdvgfgc50XyXOJ7HDai%2F40xtVyQIzxwgIsZgBPWXDkEJMIE%2BIVJwjUiwCyZejTWwULUnhAYu1%2BO4KwjSGfJop0fLKbcwitWvD8RBsclnJqRuPYoaQSyPu4Axuh1jztbTxUIu%2FPgoLLuowpFcP%2B%2F1wHPz0Z%2FaMXYREBRanhUNfCKvLdLQjdnehmP6s%2BBbY%2FYnAgWQtTdD48cImb%2BZJDtqzyU5FlFM%2B%2BnjnN3JWMKQvmyzCFuoa%2FGWzXJi6luL6d8ztMScL1YSgzqrSQcY%2BzX3%2BwD1tDN%2BKNnqbZgP%2BRQ0X2Jo7nUUtHCvpM9fHYgcmOqzIkjmMXE8ZjHXr79FD8l9kjoo5HwY2hIEcnxnzxCcU2t34boSzErxm0F1ENM6nM9hY35X9I6E3E5PQ%2FxrQ4Cvd4I1EYrmRtBUHkemISOzDuvvLRBjqkAX6FALK9fkldY%2FvfoToV3Li7VrqcsqNOclY6UI86zCyLiRA5WK7MjEixnfX1%2Bm9dsmbrkB8ZhODOoTkgxPOooWIVu48L7CeDh7mjqXniw0R4sUX9aqNEqV7Bg65rxRqu8nu5gZ%2FLeze9GhtaXCuGNqHvbGF5tbzAYYtWKgcSwdClcgDbpUzvN%2FBRGjONnfaox%2BCmO7FGsReoNTaE6jF9kCNh1I1w&X-Amz-Signature=024649d873544b7fcd508b30af6323417409757c4ca5bf2a61d150d337bbb1dd&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+      "caption": ""
+    },
+    {
+      "type": "paragraph",
+      "text": "캡션:\n마이크로사이트 구조 초안. 온라인에서 브랜드를 어떻게 소개할지 정리했다."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "5. 결과물"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "네이밍"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "로고"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "명함"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "마이크로사이트"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "패키지 방향"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "브랜드 소개 문장"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "6. 작업하며 배운 점"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "작은 브랜드는 결과물보다 방향 정리가 먼저 필요하다."
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "이름은 예쁜 단어보다 계속 사용할 수 있는 태도가 중요하다."
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "명함 한 장도 브랜드 경험의 시작이 될 수 있다."
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "과정 기록은 이후 콘텐츠와 강의 자료가 될 수 있다."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading_2",
+      "text": "7. 관련 기록 Journal"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "초로록 첫 미팅"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "초로록 네이밍 고민"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "초로록 로고 시안 제작기"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "명함 종이 고르기"
+    },
+    {
+      "type": "bulleted_list_item",
+      "text": "마이크로사이트 구조 잡기"
+    }
+  ]
+}

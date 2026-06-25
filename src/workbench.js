@@ -168,7 +168,7 @@ export function workbenchPage() {
         </header>
 
         <section class="wb-hero">
-          <h2>오늘,<br>무엇을 남길까요?</h2>
+          <h2>기록</h2>
           <p>정리하려고 애쓰지 말고 지금 떠오른 것을 그대로 남겨요.</p>
         </section>
 

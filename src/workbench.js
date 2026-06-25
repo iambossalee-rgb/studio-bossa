@@ -183,8 +183,8 @@ export function workbenchPage() {
         </header>
 
         <section class="wb-hero">
-          <h2>기록</h2>
-          <p>정리하려고 애쓰지 말고 지금 떠오른 것을 그대로 남겨요.</p>
+          <h2>일단 대충 써.</h2>
+          <p>지금 안적으면 다 까먹는다.</p>
         </section>
 
         <section class="wb-write">

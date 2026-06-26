@@ -228,13 +228,11 @@ function renderRelatedLogs(project) {
 
   if (!relatedLogs.length) {
     return `
-      <article class="wb-empty">
-        <time>기록</time>
+      <article class="wb-empty wb-related-empty">
         <div>
-          <h4>아직 연결된 기록이 없습니다</h4>
-          <p>아직 연결된 기록이 없습니다. 기록을 남길 때 프로젝트를 선택하면 이곳에 모입니다.</p>
+          <h4>아직 연결된 기록이 없습니다.</h4>
+          <p>기록을 남길 때 이 프로젝트를 선택하면 이곳에 모입니다.</p>
         </div>
-        <em>empty</em>
       </article>
     `
   }
@@ -296,15 +294,14 @@ function renderProjectDetailCard(project) {
     <div class="wb-project-lightbox">
       <div class="wb-detail-overlay"></div>
       <div class="wb-detail-modal wb-project-detail-modal" onclick="event.stopPropagation()">
+        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
         <h3>${escapeHtml(project.title)}</h3>
         ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
-        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
         ${renderProjectDocument(project)}
 
         <section class="wb-related-section">
           <div class="wb-section-head">
             <h3>관련 기록</h3>
-            <small>logs</small>
           </div>
           <div class="wb-related-list">
             ${renderRelatedLogs(project)}

@@ -559,8 +559,9 @@ window.saveLogMetadata = async function () {
 
   try {
     await saveLogPayload(detailMetadataPayload(log), { successMessage: '정리되었습니다.' })
+    selectedLogId = null
     metadataEditingLogId = null
-    selectedLogId = log.id
+    editingLogId = null
     renderWorkbenchLogs()
   } catch (error) {
     setMessage(`저장 실패: ${error.message}`)

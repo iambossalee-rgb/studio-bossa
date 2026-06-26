@@ -1102,10 +1102,13 @@ a{
 .wb-project-detail-image {
   display: block;
   width: 100%;
-  max-height: 300px;
-  object-fit: cover;
+  max-height: min(560px, 62vh);
+  object-fit: contain;
+  object-position: center;
+  background: #f3efe7;
   margin-bottom: 18px;
   border: 1px solid #d8d1c5;
+  cursor: zoom-in;
 }
 
 .wb-project-document {

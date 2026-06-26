@@ -118,16 +118,19 @@ function renderLogDetailCard(log) {
                 : '<button onclick="editSelectedLog()">수정하기</button>'
           }
         </div>
-        ${isConfirmingDelete ? `
-          <div class="wb-delete-confirm">
+      </div>
+      ${isConfirmingDelete ? `
+        <div class="wb-delete-confirm-layer">
+          <div class="wb-delete-confirm-overlay"></div>
+          <div class="wb-delete-confirm" onclick="event.stopPropagation()">
             <p>삭제하시겠습니까?</p>
             <div>
               <button onclick="cancelDeleteLog()">취소</button>
               <button onclick="confirmDeleteLog('${escapeAttr(log.id)}')">확인</button>
             </div>
           </div>
-        ` : ''}
-      </div>
+        </div>
+      ` : ''}
     </div>
   `
 }

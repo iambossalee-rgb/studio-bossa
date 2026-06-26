@@ -747,16 +747,31 @@ a{
   color: #a04435;
 }
 
+.wb-delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(17, 17, 17, .68);
+}
+
 .wb-delete-confirm {
-  margin-top: 14px;
+  position: fixed;
+  z-index: 110;
+  top: 50%;
+  left: 50%;
+  width: min(340px, calc(100vw - 48px));
+  transform: translate(-50%, -50%);
+  background: #fffdf8;
   border: 1px solid #a04435;
-  padding: 14px;
+  padding: 18px;
   color: #4b211b;
+  box-shadow: 0 22px 60px rgba(0,0,0,.28);
 }
 
 .wb-delete-confirm p {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .wb-delete-confirm div {
@@ -1000,6 +1015,10 @@ a{
   .wb-delete-confirm div {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .wb-delete-confirm {
+    width: calc(100vw - 44px);
   }
 
   .wb-list {

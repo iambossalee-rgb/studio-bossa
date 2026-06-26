@@ -640,6 +640,12 @@ a{
   padding: 26px 28px;
 }
 
+.wb-project-detail-modal {
+  width: min(1100px, calc(100vw - 96px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
 .wb-detail-meta {
   display: flex;
   gap: 10px;

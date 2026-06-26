@@ -4,6 +4,7 @@ let bossaTypeOptions = []
 let bossaTagOptions = []
 let selectedLogId = null
 let editingLogId = null
+let metadataEditingLogId = null
 
 function escapeHtml(text = '') {
   return String(text)
@@ -67,7 +68,8 @@ function renderMetaChips(log) {
 
 function renderLogDetailCard(log) {
   const isEditing = editingLogId === log.id
-  const editLock = isEditing ? '' : 'disabled'
+  const isMetadataEditing = isEditing || metadataEditingLogId === log.id
+  const editLock = isMetadataEditing ? '' : 'disabled'
   const detailTitle = isEditing
     ? `<input id="detailTitle" class="wb-detail-title-input" value="${escapeAttr(log.title)}" placeholder="기록 제목" />`
     : `<h3>${escapeHtml(log.title)}</h3>`
@@ -90,9 +92,7 @@ function renderLogDetailCard(log) {
         ${detailBody}
         <div class="wb-detail-fields">
           <input id="detailProject" list="logProjectOptions" value="${escapeAttr(log.project || '')}" placeholder="프로젝트" ${editLock} />
-          <select id="detailType" ${editLock}>
-            ${renderSelectOptionMarkup(bossaTypeOptions, '유형', log.type || '')}
-          </select>
+          <input id="detailType" list="logTypeOptions" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
           <select id="detailTagSelect" class="wb-tag-select" multiple aria-label="태그 선택" ${editLock}>
             ${renderMultiSelectOptionMarkup(bossaTagOptions, log.tags || [])}
           </select>
@@ -110,7 +110,9 @@ function renderLogDetailCard(log) {
           ${
             isEditing
               ? '<button onclick="createBossaLog()">저장하기</button>'
-              : '<button onclick="editSelectedLog()">수정하기</button>'
+              : isMetadataEditing
+                ? '<button onclick="saveLogMetadata()">확인</button>'
+                : '<button onclick="editSelectedLog()">수정하기</button>'
           }
         </div>
       </div>
@@ -189,7 +191,7 @@ function renderWorkbenchLogs(logs = bossaLogs) {
 
 function renderProjectOptions() {
   renderDatalist('#logProjectOptions', bossaProjectOptions)
-  renderSelectOptions('#detailType', bossaTypeOptions, '유형')
+  renderDatalist('#logTypeOptions', bossaTypeOptions)
   renderTagSelectOptions('#detailTagSelect')
   renderDatalist('#logTagOptions', bossaTagOptions)
 }
@@ -318,6 +320,7 @@ function upsertLog(log) {
 
 function setEditingState(log) {
   editingLogId = log?.id || null
+  metadataEditingLogId = null
   selectedLogId = log?.id || selectedLogId
 
   renderWorkbenchLogs()
@@ -361,6 +364,7 @@ export function workbenchPage() {
           <div class="wb-field-row">
             <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
             <datalist id="logProjectOptions"></datalist>
+            <datalist id="logTypeOptions"></datalist>
             <datalist id="logTagOptions"></datalist>
           </div>
 
@@ -482,6 +486,8 @@ window.openLogDetail = function (id) {
   if (!log) return
 
   selectedLogId = id
+  editingLogId = null
+  metadataEditingLogId = null
   renderWorkbenchLogs()
   setMessage('')
 }
@@ -489,6 +495,7 @@ window.openLogDetail = function (id) {
 window.closeLogDetail = function () {
   selectedLogId = null
   editingLogId = null
+  metadataEditingLogId = null
   renderWorkbenchLogs()
 }
 
@@ -503,7 +510,61 @@ window.editSelectedLog = function () {
 
 window.cancelLogEditing = function () {
   setEditingState(null)
+  metadataEditingLogId = null
   setMessage('')
+}
+
+function detailMetadataPayload(log) {
+  return {
+    id: log.id,
+    title: log.title,
+    content: log.content,
+    project: document.querySelector('#detailProject')?.value || '',
+    type: document.querySelector('#detailType')?.value.trim() || '',
+    tags: [...new Set([
+      ...selectedOptions(document.querySelector('#detailTagSelect')),
+      ...parseTags(document.querySelector('#detailTags')?.value || ''),
+    ])],
+    status: document.querySelector('#detailStatus')?.value || '작업중',
+    isPublic: Boolean(document.querySelector('#detailPublic')?.checked),
+  }
+}
+
+async function saveLogPayload(payload, { successMessage = '저장되었습니다.' } = {}) {
+  const response = await fetch('/api/create-log', {
+    method: payload.id ? 'PATCH' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const result = await readApiResponse(response)
+
+  if (!result.ok) {
+    throw new Error(result.error || '저장 실패')
+  }
+
+  setMessage(successMessage)
+  upsertLog(result.log)
+  await loadBossaLogs({ silent: true })
+  await loadProjectOptions()
+
+  return result.log
+}
+
+window.saveLogMetadata = async function () {
+  const log = currentLog()
+  if (!log) return
+
+  setMessage('정리 저장 중...')
+
+  try {
+    await saveLogPayload(detailMetadataPayload(log), { successMessage: '정리되었습니다.' })
+    metadataEditingLogId = null
+    selectedLogId = log.id
+    renderWorkbenchLogs()
+  } catch (error) {
+    setMessage(`저장 실패: ${error.message}`)
+  }
 }
 
 window.createBossaLog = async function () {
@@ -535,32 +596,23 @@ window.createBossaLog = async function () {
   message.textContent = '저장 중...'
 
   try {
-    const method = editingLogId ? 'PATCH' : 'POST'
-    const response = await fetch('/api/create-log', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editingLogId, title, content, project: metadataProject, type, tags, status, isPublic }),
-    })
-
-    const result = await readApiResponse(response)
-
-    if (!result.ok) {
-      throw new Error(result.error || '저장 실패')
-    }
-
-    message.textContent = '저장되었습니다.'
+    const log = await saveLogPayload(
+      { id: editingLogId, title, content, project: metadataProject, type, tags, status, isPublic },
+      { successMessage: isEditing ? '저장되었습니다.' : '저장되었습니다. 이어서 정리해보세요.' },
+    )
     editingLogId = null
-    selectedLogId = result.log?.id || null
+    selectedLogId = log?.id || null
 
     if (!isEditing) {
       document.querySelector('#logTitle').value = ''
       document.querySelector('#logContent').value = ''
       document.querySelector('#logProject').value = ''
+      metadataEditingLogId = log?.id || null
+    } else {
+      metadataEditingLogId = null
     }
 
-    upsertLog(result.log)
-    await loadBossaLogs({ silent: true })
-    await loadProjectOptions()
+    renderWorkbenchLogs()
   } catch (error) {
     message.textContent = `저장 실패: ${error.message}`
   }

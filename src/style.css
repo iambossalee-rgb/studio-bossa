@@ -742,6 +742,41 @@ a{
   color: white;
 }
 
+.wb-detail-actions .wb-danger-action {
+  border-color: #a04435;
+  color: #a04435;
+}
+
+.wb-delete-confirm {
+  margin-top: 14px;
+  border: 1px solid #a04435;
+  padding: 14px;
+  color: #4b211b;
+}
+
+.wb-delete-confirm p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.wb-delete-confirm div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.wb-delete-confirm button {
+  border: 1px solid #151515;
+  background: transparent;
+  padding: 9px 13px;
+}
+
+.wb-delete-confirm button:last-child {
+  border-color: #a04435;
+  background: #a04435;
+  color: white;
+}
+
 .wb-section-head {
   display: flex;
   justify-content: space-between;
@@ -955,11 +990,16 @@ a{
 
   .wb-detail-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
 
   .wb-detail-actions button {
     width: 100%;
+  }
+
+  .wb-delete-confirm div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .wb-list {

@@ -5,6 +5,7 @@ let bossaTagOptions = []
 let selectedLogId = null
 let editingLogId = null
 let metadataEditingLogId = null
+let deleteConfirmLogId = null
 
 function escapeHtml(text = '') {
   return String(text)
@@ -69,6 +70,7 @@ function renderMetaChips(log) {
 function renderLogDetailCard(log) {
   const isEditing = editingLogId === log.id
   const isMetadataEditing = isEditing || metadataEditingLogId === log.id
+  const isConfirmingDelete = deleteConfirmLogId === log.id
   const editLock = isMetadataEditing ? '' : 'disabled'
   const detailTitle = isEditing
     ? `<input id="detailTitle" class="wb-detail-title-input" value="${escapeAttr(log.title)}" placeholder="기록 제목" />`
@@ -107,6 +109,7 @@ function renderLogDetailCard(log) {
         </div>
         <div class="wb-detail-actions">
           <button onclick="closeLogDetail()">닫기</button>
+          <button class="wb-danger-action" onclick="requestDeleteLog('${escapeAttr(log.id)}')">삭제</button>
           ${
             isEditing
               ? '<button onclick="createBossaLog()">저장하기</button>'
@@ -115,6 +118,15 @@ function renderLogDetailCard(log) {
                 : '<button onclick="editSelectedLog()">수정하기</button>'
           }
         </div>
+        ${isConfirmingDelete ? `
+          <div class="wb-delete-confirm">
+            <p>삭제하시겠습니까?</p>
+            <div>
+              <button onclick="cancelDeleteLog()">취소</button>
+              <button onclick="confirmDeleteLog('${escapeAttr(log.id)}')">확인</button>
+            </div>
+          </div>
+        ` : ''}
       </div>
     </div>
   `
@@ -488,6 +500,7 @@ window.openLogDetail = function (id) {
   selectedLogId = id
   editingLogId = null
   metadataEditingLogId = null
+  deleteConfirmLogId = null
   renderWorkbenchLogs()
   setMessage('')
 }
@@ -496,6 +509,7 @@ window.closeLogDetail = function () {
   selectedLogId = null
   editingLogId = null
   metadataEditingLogId = null
+  deleteConfirmLogId = null
   renderWorkbenchLogs()
 }
 
@@ -511,7 +525,47 @@ window.editSelectedLog = function () {
 window.cancelLogEditing = function () {
   setEditingState(null)
   metadataEditingLogId = null
+  deleteConfirmLogId = null
   setMessage('')
+}
+
+window.requestDeleteLog = function (id) {
+  deleteConfirmLogId = id
+  renderLogDetailHost()
+}
+
+window.cancelDeleteLog = function () {
+  deleteConfirmLogId = null
+  renderLogDetailHost()
+}
+
+window.confirmDeleteLog = async function (id) {
+  if (!id) return
+
+  setMessage('삭제 중...')
+
+  try {
+    const response = await fetch('/api/delete-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '삭제 실패')
+    }
+
+    bossaLogs = bossaLogs.filter(log => log.id !== id)
+    selectedLogId = null
+    editingLogId = null
+    metadataEditingLogId = null
+    deleteConfirmLogId = null
+    renderWorkbenchLogs()
+    setMessage('삭제되었습니다.')
+  } catch (error) {
+    setMessage(`삭제 실패: ${error.message}`)
+  }
 }
 
 function detailMetadataPayload(log) {

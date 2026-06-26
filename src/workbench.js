@@ -52,12 +52,6 @@ function logPreview(log) {
   return log.preview || log.content || '본문이 비어 있습니다.'
 }
 
-function projectSummaryFromLog(log) {
-  return String(log?.content || log?.preview || '')
-    .trim()
-    .slice(0, 500)
-}
-
 function parseTags(value = '') {
   return String(value)
     .split(',')
@@ -247,7 +241,7 @@ function renderCreateProjectModal() {
         </label>
         <label>
           <span>요약</span>
-          <textarea id="createProjectSummary" placeholder="요약">${escapeHtml(projectSummaryFromLog(log))}</textarea>
+          <textarea id="createProjectSummary" placeholder="프로젝트 소개는 나중에 정리해도 됩니다."></textarea>
         </label>
         <div>
           <button onclick="closeCreateProjectModal()">취소</button>
@@ -287,11 +281,8 @@ function renderLogDetailCard(log) {
         ${completionState}
         <div class="wb-detail-fields" ${completionState ? 'hidden' : ''}>
           <input id="detailProject" list="logProjectOptions" value="${escapeAttr(log.project || '')}" placeholder="프로젝트" ${editLock} />
-          <input id="detailType" list="logTypeOptions" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
-          <select id="detailTagSelect" class="wb-tag-select" multiple aria-label="태그 선택" ${editLock}>
-            ${renderMultiSelectOptionMarkup(bossaTagOptions, log.tags || [])}
-          </select>
-          <input id="detailTags" class="wb-tag-input" list="logTagOptions" placeholder="새 태그, 쉼표로 구분" ${editLock} />
+          <input id="detailType" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
+          <input id="detailTags" class="wb-tag-input" value="${escapeAttr((log.tags || []).join(', '))}" placeholder="태그, 쉼표로 구분" ${editLock} />
           <select id="detailStatus" ${editLock}>
             ${renderStatusOptions(log.status || '작업중')}
           </select>
@@ -420,7 +411,6 @@ function renderWorkbenchProjects(projects = bossaProjects) {
 function renderProjectOptions() {
   renderDatalist('#logProjectOptions', bossaProjectOptions)
   renderDatalist('#logTypeOptions', bossaTypeOptions)
-  renderTagSelectOptions('#detailTagSelect')
   renderDatalist('#logTagOptions', bossaTagOptions)
 }
 
@@ -970,10 +960,7 @@ function detailMetadataPayload(log) {
     content: log.content,
     project: document.querySelector('#detailProject')?.value || '',
     type: document.querySelector('#detailType')?.value.trim() || '',
-    tags: [...new Set([
-      ...selectedOptions(document.querySelector('#detailTagSelect')),
-      ...parseTags(document.querySelector('#detailTags')?.value || ''),
-    ])],
+    tags: [...new Set(parseTags(document.querySelector('#detailTags')?.value || ''))],
     status: document.querySelector('#detailStatus')?.value || '작업중',
     isPublic: Boolean(document.querySelector('#detailPublic')?.checked),
   }
@@ -1103,10 +1090,7 @@ window.createBossaLog = async function () {
   const project = document.querySelector('#logProject').value
   const type = isEditing ? document.querySelector('#detailType')?.value.trim() || '' : ''
   const tags = isEditing
-    ? [...new Set([
-      ...selectedOptions(document.querySelector('#detailTagSelect')),
-      ...parseTags(document.querySelector('#detailTags')?.value || ''),
-    ])]
+    ? [...new Set(parseTags(document.querySelector('#detailTags')?.value || ''))]
     : []
   const status = isEditing ? document.querySelector('#detailStatus')?.value || '작업중' : '작업중'
   const isPublic = isEditing ? Boolean(document.querySelector('#detailPublic')?.checked) : false

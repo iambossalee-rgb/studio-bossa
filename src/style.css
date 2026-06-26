@@ -916,6 +916,7 @@ a{
   background: #fffdf8;
   border: 1px solid #d8d1c5;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .wb-project-card img {
@@ -957,6 +958,48 @@ a{
   color: #777;
   padding: 4px 7px;
   font-size: 12px;
+}
+
+.wb-project-detail-image {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  border: 1px solid #d8d1c5;
+}
+
+.wb-related-section {
+  margin-top: 28px;
+}
+
+.wb-related-list {
+  margin-top: 12px;
+}
+
+.wb-related-log {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #d8d1c5;
+  cursor: pointer;
+}
+
+.wb-related-log h5 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  letter-spacing: -.04em;
+}
+
+.wb-related-log p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (max-width: 900px) {
@@ -1073,6 +1116,10 @@ a{
     padding: 20px;
   }
 
+  .wb-project-detail-modal {
+    top: 50%;
+  }
+
   .wb-detail-modal h3 {
     font-size: 25px;
   }
@@ -1113,6 +1160,11 @@ a{
 
   #projectList {
     grid-template-columns: 1fr;
+  }
+
+  .wb-related-log {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .wb-log-summary {

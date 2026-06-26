@@ -9,6 +9,9 @@ let deleteConfirmLogId = null
 let workbenchView = 'logs'
 let bossaProjects = []
 let bossaProjectsLoaded = false
+let selectedProjectId = null
+let relatedLogsByProject = {}
+let relatedLogsLoadingProjectId = null
 
 function escapeHtml(text = '') {
   return String(text)
@@ -97,7 +100,7 @@ function renderProjectCards(projects = []) {
     const meta = projectMeta(project)
 
     return `
-      <article class="wb-project-card">
+      <article class="wb-project-card" onclick="openProjectDetail('${escapeAttr(project.id)}')">
         ${project.image ? `<img src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
         <div>
           ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
@@ -107,6 +110,97 @@ function renderProjectCards(projects = []) {
       </article>
     `
   }).join('')
+}
+
+function currentProject() {
+  return bossaProjects.find(project => project.id === selectedProjectId) || null
+}
+
+function renderRelatedLogCard(log) {
+  const tags = Array.isArray(log.tags) ? log.tags : []
+  const meta = [
+    log.type || '',
+    ...tags.map(tag => `#${tag}`),
+  ].filter(Boolean)
+
+  return `
+    <article class="wb-related-log" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+      <time>${escapeHtml(formatDate(log.date))}</time>
+      <div>
+        <h5>${escapeHtml(log.title)}</h5>
+        <p>${escapeHtml(logPreview(log))}</p>
+        ${meta.length ? `<div class="wb-log-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+      </div>
+    </article>
+  `
+}
+
+function renderRelatedLogs(project) {
+  if (relatedLogsLoadingProjectId === project.id) {
+    return `
+      <article class="wb-empty">
+        <time>기록</time>
+        <div>
+          <h4>관련 기록을 불러오는 중입니다</h4>
+          <p>BOSSA Log에서 프로젝트명이 같은 기록을 찾고 있습니다.</p>
+        </div>
+        <em>load</em>
+      </article>
+    `
+  }
+
+  const relatedLogs = relatedLogsByProject[project.id] || []
+
+  if (!relatedLogs.length) {
+    return `
+      <article class="wb-empty">
+        <time>기록</time>
+        <div>
+          <h4>아직 연결된 기록이 없습니다</h4>
+          <p>아직 연결된 기록이 없습니다. 기록을 남길 때 프로젝트를 선택하면 이곳에 모입니다.</p>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return relatedLogs.map(renderRelatedLogCard).join('')
+}
+
+function renderProjectDetailCard(project) {
+  const meta = projectMeta(project)
+
+  return `
+    <div class="wb-project-lightbox">
+      <div class="wb-detail-overlay"></div>
+      <div class="wb-detail-modal wb-project-detail-modal" onclick="event.stopPropagation()">
+        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+        ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+        <h3>${escapeHtml(project.title)}</h3>
+        <div class="wb-detail-body">${escapeHtml(project.summary || project.category || '요약이 없습니다.')}</div>
+
+        <section class="wb-related-section">
+          <div class="wb-section-head">
+            <h3>관련 기록</h3>
+            <small>logs</small>
+          </div>
+          <div class="wb-related-list">
+            ${renderRelatedLogs(project)}
+          </div>
+        </section>
+
+        <div class="wb-detail-actions">
+          <button onclick="closeProjectDetail()">닫기</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderProjectDetailHost() {
+  const detailHost = document.querySelector('#projectDetailHost')
+  const project = currentProject()
+  if (detailHost) detailHost.innerHTML = project ? renderProjectDetailCard(project) : ''
 }
 
 function renderLogDetailCard(log) {
@@ -262,6 +356,7 @@ function renderWorkbenchView() {
 function renderWorkbenchProjects(projects = bossaProjects) {
   const list = document.querySelector('#projectList')
   if (list) list.innerHTML = renderProjectCards(projects)
+  renderProjectDetailHost()
 }
 
 function renderProjectOptions() {
@@ -473,7 +568,6 @@ export function workbenchPage() {
                 <em>load</em>
               </article>
             </div>
-            <div id="logDetailHost">${renderSelectedLogDetail()}</div>
           </section>
         </div>
 
@@ -494,6 +588,8 @@ export function workbenchPage() {
             </article>
           </div>
         </section>
+        <div id="logDetailHost">${renderSelectedLogDetail()}</div>
+        <div id="projectDetailHost"></div>
       </main>
     </div>
   `
@@ -509,6 +605,7 @@ export function initWorkbench() {
 window.switchWorkbenchView = function (view) {
   workbenchView = view
   closeLogDetail()
+  closeProjectDetail()
   renderWorkbenchView()
 
   if (view === 'projects') {
@@ -621,6 +718,69 @@ window.loadWorkbenchProjects = async function () {
       `
     }
   }
+}
+
+window.openProjectDetail = function (id) {
+  const project = bossaProjects.find(item => item.id === id)
+  if (!project) return
+
+  closeLogDetail()
+  selectedProjectId = id
+  renderProjectDetailHost()
+  loadRelatedLogs(project)
+}
+
+window.closeProjectDetail = function () {
+  selectedProjectId = null
+  relatedLogsLoadingProjectId = null
+  renderProjectDetailHost()
+}
+
+window.loadRelatedLogs = async function (project) {
+  if (!project?.id || !project.title) return
+
+  relatedLogsLoadingProjectId = project.id
+  renderProjectDetailHost()
+
+  try {
+    const response = await fetch(`/api/project-logs?project=${encodeURIComponent(project.title)}`)
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '관련 기록을 불러오지 못했습니다')
+    }
+
+    relatedLogsByProject = {
+      ...relatedLogsByProject,
+      [project.id]: result.logs || [],
+    }
+  } catch (error) {
+    relatedLogsByProject = {
+      ...relatedLogsByProject,
+      [project.id]: [],
+    }
+    setMessage(`관련 기록 로드 실패: ${error.message}`)
+  } finally {
+    relatedLogsLoadingProjectId = null
+    renderProjectDetailHost()
+  }
+}
+
+window.openRelatedLog = function (id) {
+  const relatedLogs = Object.values(relatedLogsByProject).flat()
+  const log = relatedLogs.find(item => item.id === id) || bossaLogs.find(item => item.id === id)
+  if (!log) return
+
+  bossaLogs = [
+    log,
+    ...bossaLogs.filter(item => item.id !== log.id),
+  ]
+  closeProjectDetail()
+  selectedLogId = log.id
+  editingLogId = null
+  metadataEditingLogId = null
+  deleteConfirmLogId = null
+  renderWorkbenchLogs()
 }
 
 async function readApiResponse(response) {

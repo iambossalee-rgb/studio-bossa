@@ -9,7 +9,10 @@ let deleteConfirmLogId = null
 let workbenchView = 'logs'
 let bossaProjects = []
 let bossaProjectsLoaded = false
+let selectedProjectCategory = null
 let selectedProjectId = null
+let projectBodiesByProject = {}
+let projectBodyLoadingProjectId = null
 let relatedLogsByProject = {}
 let relatedLogsLoadingProjectId = null
 let organizingLogId = null
@@ -85,6 +88,60 @@ function projectMeta(project) {
   ].filter(Boolean)
 }
 
+function projectCategory(project) {
+  return project.category || project.type || project.tag || '기타'
+}
+
+function projectCategories(projects = bossaProjects) {
+  return [...new Set(projects.map(projectCategory))]
+    .sort((a, b) => {
+      if (a === '기타') return 1
+      if (b === '기타') return -1
+      return a.localeCompare(b, 'ko')
+    })
+}
+
+function renderProjectCategoryMenu(projects = bossaProjects) {
+  const categories = projectCategories(projects)
+
+  if (!categories.length) {
+    return `
+      <article class="wb-empty">
+        <time>프로젝트</time>
+        <div>
+          <h4>프로젝트를 불러오지 못했습니다</h4>
+          <p>Projects 데이터 소스에 항목이 있으면 카테고리로 정리됩니다.</p>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return `
+    <nav class="wb-project-category-menu" aria-label="Project categories">
+      ${categories.map(category => {
+        const count = projects.filter(project => projectCategory(project) === category).length
+
+        return `
+          <button onclick="openProjectCategory('${escapeAttr(category)}')">
+            <span>${escapeHtml(category)}</span>
+            <em>${count}</em>
+          </button>
+        `
+      }).join('')}
+    </nav>
+  `
+}
+
+function renderProjectCategoryHeader(category) {
+  return `
+    <div class="wb-project-category-head">
+      <button onclick="closeProjectCategory()">← 카테고리</button>
+      <h4>${escapeHtml(category)}</h4>
+    </div>
+  `
+}
+
 function renderProjectCards(projects = []) {
   if (!projects.length) {
     return `
@@ -115,6 +172,20 @@ function renderProjectCards(projects = []) {
   }).join('')
 }
 
+function renderProjectWorkbench(projects = bossaProjects) {
+  if (!selectedProjectCategory) {
+    return renderProjectCategoryMenu(projects)
+  }
+
+  const filteredProjects = projects.filter(project => projectCategory(project) === selectedProjectCategory)
+  return `
+    ${renderProjectCategoryHeader(selectedProjectCategory)}
+    <div class="wb-project-card-list">
+      ${renderProjectCards(filteredProjects)}
+    </div>
+  `
+}
+
 function currentProject() {
   return bossaProjects.find(project => project.id === selectedProjectId) || null
 }
@@ -124,6 +195,7 @@ function renderRelatedLogCard(log) {
   const meta = [
     log.type || '',
     ...tags.map(tag => `#${tag}`),
+    log.status || '',
   ].filter(Boolean)
 
   return `
@@ -170,6 +242,53 @@ function renderRelatedLogs(project) {
   return relatedLogs.map(renderRelatedLogCard).join('')
 }
 
+function renderProjectBlock(block) {
+  if (block.type === 'heading_1') return `<h1>${escapeHtml(block.text)}</h1>`
+  if (block.type === 'heading_2') return `<h2>${escapeHtml(block.text)}</h2>`
+  if (block.type === 'heading_3') return `<h3>${escapeHtml(block.text)}</h3>`
+  if (block.type === 'paragraph') return block.text.trim() ? `<p>${escapeHtml(block.text)}</p>` : ''
+  if (block.type === 'bulleted_list_item') return `<p class="wb-project-doc-list">• ${escapeHtml(block.text)}</p>`
+  if (block.type === 'numbered_list_item') return `<p class="wb-project-doc-list">1. ${escapeHtml(block.text)}</p>`
+  if (block.type === 'quote') return `<blockquote>${escapeHtml(block.text)}</blockquote>`
+
+  if (block.type === 'image' && block.url) {
+    return `
+      <figure>
+        <img src="${escapeAttr(block.url)}" alt="${escapeAttr(block.caption || '')}" />
+        ${block.caption ? `<figcaption>${escapeHtml(block.caption)}</figcaption>` : ''}
+      </figure>
+    `
+  }
+
+  return ''
+}
+
+function renderProjectDocument(project) {
+  if (projectBodyLoadingProjectId === project.id) {
+    return `
+      <section class="wb-project-document">
+        <p>프로젝트 문서를 불러오는 중입니다.</p>
+      </section>
+    `
+  }
+
+  const blocks = projectBodiesByProject[project.id] || []
+
+  if (!blocks.length) {
+    return `
+      <section class="wb-project-document">
+        <p>Notion 프로젝트 페이지에 본문을 추가하면 이곳에 표시됩니다.</p>
+      </section>
+    `
+  }
+
+  return `
+    <section class="wb-project-document">
+      ${blocks.map(renderProjectBlock).join('')}
+    </section>
+  `
+}
+
 function renderProjectDetailCard(project) {
   const meta = projectMeta(project)
 
@@ -177,10 +296,10 @@ function renderProjectDetailCard(project) {
     <div class="wb-project-lightbox">
       <div class="wb-detail-overlay"></div>
       <div class="wb-detail-modal wb-project-detail-modal" onclick="event.stopPropagation()">
-        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
-        ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
         <h3>${escapeHtml(project.title)}</h3>
-        <div class="wb-detail-body">${escapeHtml(project.summary || project.category || '요약이 없습니다.')}</div>
+        ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+        ${renderProjectDocument(project)}
 
         <section class="wb-related-section">
           <div class="wb-section-head">
@@ -404,7 +523,7 @@ function renderWorkbenchView() {
 
 function renderWorkbenchProjects(projects = bossaProjects) {
   const list = document.querySelector('#projectList')
-  if (list) list.innerHTML = renderProjectCards(projects)
+  if (list) list.innerHTML = renderProjectWorkbench(projects)
   renderProjectDetailHost()
 }
 
@@ -656,11 +775,24 @@ window.switchWorkbenchView = function (view) {
   closeLogDetail()
   closeProjectDetail()
   closeCreateProjectModal()
+  if (view === 'projects') selectedProjectCategory = null
   renderWorkbenchView()
 
   if (view === 'projects') {
     loadWorkbenchProjects()
   }
+}
+
+window.openProjectCategory = function (category) {
+  selectedProjectCategory = category || null
+  closeProjectDetail()
+  renderWorkbenchProjects()
+}
+
+window.closeProjectCategory = function () {
+  selectedProjectCategory = null
+  closeProjectDetail()
+  renderWorkbenchProjects()
 }
 
 window.loadBossaLogs = async function ({ silent = false } = {}) {
@@ -778,11 +910,13 @@ window.openProjectDetail = function (id) {
   closeCreateProjectModal()
   selectedProjectId = id
   renderProjectDetailHost()
+  loadProjectDocument(project)
   loadRelatedLogs(project)
 }
 
 window.closeProjectDetail = function () {
   selectedProjectId = null
+  projectBodyLoadingProjectId = null
   relatedLogsLoadingProjectId = null
   renderProjectDetailHost()
 }
@@ -799,6 +933,41 @@ window.openCreateProjectModal = function (id) {
 window.closeCreateProjectModal = function () {
   projectCreateLogId = null
   renderCreateProjectModal()
+}
+
+window.loadProjectDocument = async function (project) {
+  if (!project?.id) return
+
+  if (projectBodiesByProject[project.id]) {
+    renderProjectDetailHost()
+    return
+  }
+
+  projectBodyLoadingProjectId = project.id
+  renderProjectDetailHost()
+
+  try {
+    const response = await fetch(`/api/project-detail?id=${encodeURIComponent(project.id)}`)
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '프로젝트 문서를 불러오지 못했습니다')
+    }
+
+    projectBodiesByProject = {
+      ...projectBodiesByProject,
+      [project.id]: result.blocks || [],
+    }
+  } catch (error) {
+    projectBodiesByProject = {
+      ...projectBodiesByProject,
+      [project.id]: [],
+    }
+    setMessage(`프로젝트 문서 로드 실패: ${error.message}`)
+  } finally {
+    projectBodyLoadingProjectId = null
+    renderProjectDetailHost()
+  }
 }
 
 window.loadRelatedLogs = async function (project) {
@@ -1060,7 +1229,9 @@ window.createProjectFromLog = async function () {
     await loadProjectOptions()
     bossaProjectsLoaded = false
     bossaProjects = []
+    selectedProjectCategory = null
     relatedLogsByProject = {}
+    projectBodiesByProject = {}
     if (workbenchView === 'projects') {
       await loadWorkbenchProjects()
     }

@@ -981,10 +981,68 @@ a{
 }
 
 #projectList {
+  margin-top: 18px;
+}
+
+.wb-project-category-menu {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid #d8d1c5;
+}
+
+.wb-project-category-menu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #d8d1c5;
+  background: transparent;
+  color: #151515;
+  padding: 18px 0;
+  font: inherit;
+  text-align: left;
+}
+
+.wb-project-category-menu span {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -.055em;
+}
+
+.wb-project-category-menu em {
+  font-style: normal;
+  color: #777;
+}
+
+.wb-project-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #d8d1c5;
+  padding-bottom: 12px;
+}
+
+.wb-project-category-head button {
+  border: 1px solid #d8d1c5;
+  background: transparent;
+  padding: 9px 12px;
+  font: inherit;
+}
+
+.wb-project-category-head h4 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -.055em;
+}
+
+.wb-project-card-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  margin-top: 18px;
 }
 
 .wb-project-card {
@@ -1042,6 +1100,59 @@ a{
   object-fit: cover;
   margin-bottom: 18px;
   border: 1px solid #d8d1c5;
+}
+
+.wb-project-document {
+  margin-top: 20px;
+  color: #333;
+  line-height: 1.8;
+}
+
+.wb-project-document h1,
+.wb-project-document h2,
+.wb-project-document h3 {
+  margin: 22px 0 10px;
+  letter-spacing: -.045em;
+}
+
+.wb-project-document h1 {
+  font-size: 28px;
+}
+
+.wb-project-document h2 {
+  font-size: 24px;
+}
+
+.wb-project-document h3 {
+  font-size: 20px;
+}
+
+.wb-project-document p {
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+}
+
+.wb-project-document blockquote {
+  margin: 16px 0;
+  padding-left: 14px;
+  border-left: 3px solid #d8d1c5;
+  color: #555;
+}
+
+.wb-project-document figure {
+  margin: 18px 0;
+}
+
+.wb-project-document img {
+  display: block;
+  width: 100%;
+  border: 1px solid #d8d1c5;
+}
+
+.wb-project-document figcaption {
+  margin-top: 8px;
+  color: #777;
+  font-size: 13px;
 }
 
 .wb-related-section {
@@ -1233,8 +1344,13 @@ a{
     margin-top: 34px;
   }
 
-  #projectList {
+  .wb-project-card-list {
     grid-template-columns: 1fr;
+  }
+
+  .wb-project-category-menu span,
+  .wb-project-category-head h4 {
+    font-size: 24px;
   }
 
   .wb-related-log {

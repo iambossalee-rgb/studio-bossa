@@ -61,9 +61,10 @@ export default async function handler(req, res) {
       page_size: 50,
     })
 
+    const includePrivate = req.query?.includePrivate === '1'
     const projects = response.results
       .map(toProject)
-      .filter(project => project.public)
+      .filter(project => includePrivate || project.public)
 
     return res.status(200).json({ ok: true, projects })
   } catch (error) {

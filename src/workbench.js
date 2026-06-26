@@ -12,6 +12,9 @@ let bossaProjectsLoaded = false
 let selectedProjectId = null
 let relatedLogsByProject = {}
 let relatedLogsLoadingProjectId = null
+let organizingLogId = null
+let completionLogId = null
+let projectCreateLogId = null
 
 function escapeHtml(text = '') {
   return String(text)
@@ -47,6 +50,12 @@ function formatDate(date) {
 
 function logPreview(log) {
   return log.preview || log.content || '본문이 비어 있습니다.'
+}
+
+function projectSummaryFromLog(log) {
+  return String(log?.content || log?.preview || '')
+    .trim()
+    .slice(0, 500)
 }
 
 function parseTags(value = '') {
@@ -203,6 +212,52 @@ function renderProjectDetailHost() {
   if (detailHost) detailHost.innerHTML = project ? renderProjectDetailCard(project) : ''
 }
 
+function renderCompletionState(log) {
+  if (completionLogId !== log.id) return ''
+
+  return `
+    <div class="wb-completion">
+      <p>저장되었습니다.</p>
+      <div>
+        <button onclick="openCreateProjectModal('${escapeAttr(log.id)}')">프로젝트로 만들기</button>
+        <button class="wb-secondary-action" onclick="continueWriting()">계속 기록하기</button>
+      </div>
+    </div>
+  `
+}
+
+function renderCreateProjectModal() {
+  const host = document.querySelector('#createProjectHost')
+  if (!host) return
+
+  const log = bossaLogs.find(item => item.id === projectCreateLogId)
+  if (!log) {
+    host.innerHTML = ''
+    return
+  }
+
+  host.innerHTML = `
+    <div class="wb-delete-confirm-layer wb-project-create-layer">
+      <div class="wb-delete-confirm-overlay"></div>
+      <div class="wb-delete-confirm wb-project-create" onclick="event.stopPropagation()">
+        <h3>새 프로젝트로 만들까요?</h3>
+        <label>
+          <span>프로젝트명</span>
+          <input id="createProjectTitle" value="${escapeAttr(log.title)}" placeholder="프로젝트명" />
+        </label>
+        <label>
+          <span>요약</span>
+          <textarea id="createProjectSummary" placeholder="요약">${escapeHtml(projectSummaryFromLog(log))}</textarea>
+        </label>
+        <div>
+          <button onclick="closeCreateProjectModal()">취소</button>
+          <button onclick="createProjectFromLog()">만들기</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
 function renderLogDetailCard(log) {
   const isEditing = editingLogId === log.id
   const isMetadataEditing = isEditing || metadataEditingLogId === log.id
@@ -214,6 +269,7 @@ function renderLogDetailCard(log) {
   const detailBody = isEditing
     ? `<textarea id="detailContent" class="wb-detail-body-input" placeholder="본문">${escapeHtml(log.content || '')}</textarea>`
     : `<div class="wb-detail-body">${escapeHtml(log.content || '본문이 비어 있습니다.')}</div>`
+  const completionState = renderCompletionState(log)
 
   return `
     <div class="wb-detail-lightbox">
@@ -228,7 +284,8 @@ function renderLogDetailCard(log) {
         </div>
         ${detailTitle}
         ${detailBody}
-        <div class="wb-detail-fields">
+        ${completionState}
+        <div class="wb-detail-fields" ${completionState ? 'hidden' : ''}>
           <input id="detailProject" list="logProjectOptions" value="${escapeAttr(log.project || '')}" placeholder="프로젝트" ${editLock} />
           <input id="detailType" list="logTypeOptions" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
           <select id="detailTagSelect" class="wb-tag-select" multiple aria-label="태그 선택" ${editLock}>
@@ -243,9 +300,10 @@ function renderLogDetailCard(log) {
             공개
           </label>
         </div>
-        <div class="wb-detail-actions">
+        <div class="wb-detail-actions" ${completionState ? 'hidden' : ''}>
           <button onclick="closeLogDetail()">닫기</button>
           <button class="wb-danger-action" onclick="requestDeleteLog('${escapeAttr(log.id)}')">삭제</button>
+          <button class="wb-secondary-action" onclick="openCreateProjectModal('${escapeAttr(log.id)}')">프로젝트로 만들기</button>
           ${
             isEditing
               ? '<button onclick="createBossaLog()">저장하기</button>'
@@ -523,8 +581,8 @@ export function workbenchPage() {
         </header>
 
         <section class="wb-hero">
-          <h2>일단 대충 써.</h2>
-          <p>지금 안적으면 다 까먹는다.</p>
+          <h2>✍🏻</h2>
+          <p>일단 대충 써.</p>
         </section>
 
         <nav class="wb-tabs" aria-label="Workbench view">
@@ -590,6 +648,7 @@ export function workbenchPage() {
         </section>
         <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         <div id="projectDetailHost"></div>
+        <div id="createProjectHost"></div>
       </main>
     </div>
   `
@@ -606,6 +665,7 @@ window.switchWorkbenchView = function (view) {
   workbenchView = view
   closeLogDetail()
   closeProjectDetail()
+  closeCreateProjectModal()
   renderWorkbenchView()
 
   if (view === 'projects') {
@@ -694,7 +754,7 @@ window.loadWorkbenchProjects = async function () {
   }
 
   try {
-    const response = await fetch('/api/projects')
+    const response = await fetch('/api/projects?includePrivate=1')
     const result = await readApiResponse(response)
 
     if (!result.ok) {
@@ -725,6 +785,7 @@ window.openProjectDetail = function (id) {
   if (!project) return
 
   closeLogDetail()
+  closeCreateProjectModal()
   selectedProjectId = id
   renderProjectDetailHost()
   loadRelatedLogs(project)
@@ -734,6 +795,20 @@ window.closeProjectDetail = function () {
   selectedProjectId = null
   relatedLogsLoadingProjectId = null
   renderProjectDetailHost()
+}
+
+window.openCreateProjectModal = function (id) {
+  const log = bossaLogs.find(item => item.id === id)
+  if (!log) return
+
+  projectCreateLogId = id
+  renderCreateProjectModal()
+  document.querySelector('#createProjectTitle')?.focus()
+}
+
+window.closeCreateProjectModal = function () {
+  projectCreateLogId = null
+  renderCreateProjectModal()
 }
 
 window.loadRelatedLogs = async function (project) {
@@ -780,6 +855,8 @@ window.openRelatedLog = function (id) {
   editingLogId = null
   metadataEditingLogId = null
   deleteConfirmLogId = null
+  organizingLogId = null
+  completionLogId = null
   renderWorkbenchLogs()
 }
 
@@ -808,6 +885,9 @@ window.openLogDetail = function (id) {
   editingLogId = null
   metadataEditingLogId = null
   deleteConfirmLogId = null
+  organizingLogId = null
+  completionLogId = null
+  closeCreateProjectModal()
   renderWorkbenchLogs()
   setMessage('')
 }
@@ -817,6 +897,9 @@ window.closeLogDetail = function () {
   editingLogId = null
   metadataEditingLogId = null
   deleteConfirmLogId = null
+  organizingLogId = null
+  completionLogId = null
+  closeCreateProjectModal()
   renderWorkbenchLogs()
 }
 
@@ -833,6 +916,8 @@ window.cancelLogEditing = function () {
   setEditingState(null)
   metadataEditingLogId = null
   deleteConfirmLogId = null
+  organizingLogId = null
+  completionLogId = null
   setMessage('')
 }
 
@@ -868,6 +953,9 @@ window.confirmDeleteLog = async function (id) {
     editingLogId = null
     metadataEditingLogId = null
     deleteConfirmLogId = null
+    organizingLogId = null
+    completionLogId = null
+    closeCreateProjectModal()
     renderWorkbenchLogs()
     setMessage('삭제되었습니다.')
   } catch (error) {
@@ -917,15 +1005,90 @@ window.saveLogMetadata = async function () {
   if (!log) return
 
   setMessage('정리 저장 중...')
+  const shouldShowCompletion = organizingLogId === log.id
 
   try {
-    await saveLogPayload(detailMetadataPayload(log), { successMessage: '정리되었습니다.' })
-    selectedLogId = null
+    const updatedLog = await saveLogPayload(detailMetadataPayload(log), { successMessage: '저장되었습니다.' })
+    selectedLogId = updatedLog.id
     metadataEditingLogId = null
     editingLogId = null
+    organizingLogId = null
+    completionLogId = shouldShowCompletion ? updatedLog.id : null
     renderWorkbenchLogs()
   } catch (error) {
     setMessage(`저장 실패: ${error.message}`)
+  }
+}
+
+window.continueWriting = function () {
+  completionLogId = null
+  organizingLogId = null
+  selectedLogId = null
+  metadataEditingLogId = null
+  editingLogId = null
+  closeCreateProjectModal()
+  renderWorkbenchLogs()
+  setMessage('')
+}
+
+window.createProjectFromLog = async function () {
+  const log = bossaLogs.find(item => item.id === projectCreateLogId)
+  if (!log) return
+
+  const title = document.querySelector('#createProjectTitle')?.value.trim() || ''
+  const summary = document.querySelector('#createProjectSummary')?.value.trim() || ''
+
+  if (!title) {
+    setMessage('프로젝트명을 입력해주세요.')
+    return
+  }
+
+  setMessage('프로젝트를 만드는 중...')
+
+  try {
+    const response = await fetch('/api/create-project', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        logId: log.id,
+        title,
+        summary,
+      }),
+    })
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '프로젝트 생성 실패')
+    }
+
+    upsertLog(result.log)
+    completionLogId = null
+    organizingLogId = null
+    selectedLogId = null
+    metadataEditingLogId = null
+    editingLogId = null
+    closeCreateProjectModal()
+
+    await loadBossaLogs({ silent: true })
+    await loadProjectOptions()
+    bossaProjectsLoaded = false
+    bossaProjects = []
+    relatedLogsByProject = {}
+    if (workbenchView === 'projects') {
+      await loadWorkbenchProjects()
+    }
+
+    const stableMessage = result.schema?.stableProjectProperty
+      ? ` 프로젝트 ID는 ${result.schema.stableProjectProperty}에 저장되었습니다.`
+      : ' 안정적인 프로젝트 ID를 저장할 기존 Log 속성은 없어서 프로젝트명으로 연결했습니다.'
+    const imageMessage = result.schema?.imageProperty
+      ? ` 이미지 속성은 ${result.schema.imageProperty}를 확인했습니다.`
+      : ' Projects DB에 이미지 속성이 없습니다.'
+
+    renderWorkbenchLogs()
+    setMessage(`프로젝트를 만들었습니다.${stableMessage}${imageMessage}`)
+  } catch (error) {
+    setMessage(`프로젝트 생성 실패: ${error.message}`)
   }
 }
 
@@ -970,8 +1133,12 @@ window.createBossaLog = async function () {
       document.querySelector('#logContent').value = ''
       document.querySelector('#logProject').value = ''
       metadataEditingLogId = log?.id || null
+      organizingLogId = log?.id || null
+      completionLogId = null
     } else {
       metadataEditingLogId = null
+      organizingLogId = null
+      completionLogId = null
     }
 
     renderWorkbenchLogs()

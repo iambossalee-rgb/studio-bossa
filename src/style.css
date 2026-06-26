@@ -675,6 +675,36 @@ a{
   white-space: pre-wrap;
 }
 
+.wb-completion {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #d8d1c5;
+}
+
+.wb-completion p {
+  margin: 0 0 14px;
+  font-weight: 700;
+}
+
+.wb-completion div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wb-completion button {
+  border: 1px solid #151515;
+  background: #111;
+  color: white;
+  padding: 10px 14px;
+}
+
+.wb-completion .wb-secondary-action {
+  background: transparent;
+  color: #151515;
+  border-color: #d8d1c5;
+}
+
 .wb-detail-title-input,
 .wb-detail-body-input {
   width: 100%;
@@ -812,6 +842,51 @@ a{
   border-color: #a04435;
   background: #a04435;
   color: white;
+}
+
+.wb-project-create {
+  width: min(520px, calc(100vw - 48px));
+  border-color: #151515;
+  color: #151515;
+}
+
+.wb-project-create h3 {
+  margin: 0 0 16px;
+  font-size: 24px;
+  letter-spacing: -.045em;
+}
+
+.wb-project-create label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.wb-project-create span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #777;
+}
+
+.wb-project-create input,
+.wb-project-create textarea {
+  width: 100%;
+  border: 1px solid #d8d1c5;
+  background: #fffdf8;
+  color: #151515;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.wb-project-create textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.wb-project-create button:last-child {
+  border-color: #151515;
+  background: #111;
 }
 
 .wb-section-head {

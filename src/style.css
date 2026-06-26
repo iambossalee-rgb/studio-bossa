@@ -558,6 +558,28 @@ a{
   line-height: 1.6;
 }
 
+.wb-tabs {
+  display: flex;
+  gap: 8px;
+  max-width: 820px;
+  margin-bottom: 14px;
+}
+
+.wb-tab {
+  border: 1px solid #d8d1c5;
+  background: transparent;
+  color: #555;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.wb-tab.active {
+  background: #111;
+  border-color: #111;
+  color: white;
+}
+
 .wb-actions {
   margin-top: 20px;
   display: flex;
@@ -879,6 +901,64 @@ a{
   height: fit-content;
 }
 
+.wb-projects {
+  margin-top: 28px;
+}
+
+#projectList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.wb-project-card {
+  background: #fffdf8;
+  border: 1px solid #d8d1c5;
+  overflow: hidden;
+}
+
+.wb-project-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-project-card > div {
+  padding: 16px;
+}
+
+.wb-project-card h4 {
+  margin: 8px 0;
+  font-size: 24px;
+  letter-spacing: -.055em;
+}
+
+.wb-project-card p {
+  margin: 0;
+  color: #555;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wb-project-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wb-project-meta span {
+  border: 1px solid #d8d1c5;
+  color: #777;
+  padding: 4px 7px;
+  font-size: 12px;
+}
+
 @media (max-width: 900px) {
   .workbench {
     grid-template-columns: 1fr;
@@ -921,6 +1001,12 @@ a{
     max-width: none;
     width: 100%;
     padding: 20px;
+  }
+
+  .wb-tabs {
+    max-width: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .wb-write > input {
@@ -1023,6 +1109,10 @@ a{
 
   .wb-list {
     margin-top: 34px;
+  }
+
+  #projectList {
+    grid-template-columns: 1fr;
   }
 
   .wb-log-summary {

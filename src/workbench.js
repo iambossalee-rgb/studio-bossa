@@ -6,6 +6,9 @@ let selectedLogId = null
 let editingLogId = null
 let metadataEditingLogId = null
 let deleteConfirmLogId = null
+let workbenchView = 'logs'
+let bossaProjects = []
+let bossaProjectsLoaded = false
 
 function escapeHtml(text = '') {
   return String(text)
@@ -65,6 +68,45 @@ function renderMetaChips(log) {
   return chips.length
     ? `<div class="wb-log-meta">${chips.map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}</div>`
     : ''
+}
+
+function projectMeta(project) {
+  return [
+    project.brand || '',
+    project.category || '',
+    project.status || '',
+    project.year || '',
+  ].filter(Boolean)
+}
+
+function renderProjectCards(projects = []) {
+  if (!projects.length) {
+    return `
+      <article class="wb-empty">
+        <time>프로젝트</time>
+        <div>
+          <h4>프로젝트를 불러오지 못했습니다</h4>
+          <p>Projects 데이터 소스에 공개된 항목이 있으면 이곳에 표시됩니다.</p>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return projects.map(project => {
+    const meta = projectMeta(project)
+
+    return `
+      <article class="wb-project-card">
+        ${project.image ? `<img src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+        <div>
+          ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+          <h4>${escapeHtml(project.title)}</h4>
+          <p>${escapeHtml(project.summary || project.category || '요약이 없습니다.')}</p>
+        </div>
+      </article>
+    `
+  }).join('')
 }
 
 function renderLogDetailCard(log) {
@@ -202,6 +244,24 @@ function renderLogDetailHost() {
 function renderWorkbenchLogs(logs = bossaLogs) {
   renderLogList(logs)
   renderLogDetailHost()
+}
+
+function renderWorkbenchView() {
+  const logPanel = document.querySelector('#workbenchLogPanel')
+  const projectPanel = document.querySelector('#workbenchProjectPanel')
+  const tabs = document.querySelectorAll('.wb-tab')
+
+  for (const tab of tabs) {
+    tab.classList.toggle('active', tab.dataset.view === workbenchView)
+  }
+
+  if (logPanel) logPanel.hidden = workbenchView !== 'logs'
+  if (projectPanel) projectPanel.hidden = workbenchView !== 'projects'
+}
+
+function renderWorkbenchProjects(projects = bossaProjects) {
+  const list = document.querySelector('#projectList')
+  if (list) list.innerHTML = renderProjectCards(projects)
 }
 
 function renderProjectOptions() {
@@ -372,42 +432,67 @@ export function workbenchPage() {
           <p>지금 안적으면 다 까먹는다.</p>
         </section>
 
-        <section class="wb-write">
-          <input id="logTitle" placeholder="기록 제목" />
-          <textarea id="logContent" placeholder="생각, 아이디어, 회의 메모, 오늘의 장면..."></textarea>
+        <nav class="wb-tabs" aria-label="Workbench view">
+          <button class="wb-tab active" data-view="logs" onclick="switchWorkbenchView('logs')">기록</button>
+          <button class="wb-tab" data-view="projects" onclick="switchWorkbenchView('projects')">프로젝트</button>
+        </nav>
 
-          <div class="wb-field-row">
-            <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
-            <datalist id="logProjectOptions"></datalist>
-            <datalist id="logTypeOptions"></datalist>
-            <datalist id="logTagOptions"></datalist>
-          </div>
+        <div id="workbenchLogPanel">
+          <section class="wb-write">
+            <input id="logTitle" placeholder="기록 제목" />
+            <textarea id="logContent" placeholder="생각, 아이디어, 회의 메모, 오늘의 장면..."></textarea>
 
-          <div class="wb-actions">
-            <button id="logCancel" class="wb-secondary-action" onclick="cancelLogEditing()" hidden>취소</button>
-            <button id="logSubmit" onclick="createBossaLog()">기록하기</button>
-          </div>
+            <div class="wb-field-row">
+              <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
+              <datalist id="logProjectOptions"></datalist>
+              <datalist id="logTypeOptions"></datalist>
+              <datalist id="logTagOptions"></datalist>
+            </div>
 
-          <p id="saveMessage" class="wb-message"></p>
-        </section>
+            <div class="wb-actions">
+              <button id="logCancel" class="wb-secondary-action" onclick="cancelLogEditing()" hidden>취소</button>
+              <button id="logSubmit" onclick="createBossaLog()">기록하기</button>
+            </div>
 
-        <section class="wb-list">
+            <p id="saveMessage" class="wb-message"></p>
+          </section>
+
+          <section class="wb-list">
+            <div class="wb-section-head">
+              <h3>오늘의 기록</h3>
+              <small>recent</small>
+            </div>
+
+            <div id="logList">
+              <article class="wb-empty">
+                <time>로딩</time>
+                <div>
+                  <h4>기록을 불러오는 중입니다</h4>
+                  <p>Notion에서 최근 기록을 가져오고 있습니다.</p>
+                </div>
+                <em>load</em>
+              </article>
+            </div>
+            <div id="logDetailHost">${renderSelectedLogDetail()}</div>
+          </section>
+        </div>
+
+        <section id="workbenchProjectPanel" class="wb-projects" hidden>
           <div class="wb-section-head">
-            <h3>오늘의 기록</h3>
-            <small>recent</small>
+            <h3>프로젝트</h3>
+            <small>curated</small>
           </div>
 
-          <div id="logList">
+          <div id="projectList">
             <article class="wb-empty">
-              <time>로딩</time>
+              <time>프로젝트</time>
               <div>
-                <h4>기록을 불러오는 중입니다</h4>
-                <p>Notion에서 최근 기록을 가져오고 있습니다.</p>
+                <h4>프로젝트를 불러오는 중입니다</h4>
+                <p>Projects 데이터 소스에서 포트폴리오 항목을 가져오고 있습니다.</p>
               </div>
               <em>load</em>
             </article>
           </div>
-          <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         </section>
       </main>
     </div>
@@ -416,8 +501,19 @@ export function workbenchPage() {
 
 export function initWorkbench() {
   setupEditorPaste()
+  renderWorkbenchView()
   loadBossaLogs()
   loadProjectOptions()
+}
+
+window.switchWorkbenchView = function (view) {
+  workbenchView = view
+  closeLogDetail()
+  renderWorkbenchView()
+
+  if (view === 'projects') {
+    loadWorkbenchProjects()
+  }
 }
 
 window.loadBossaLogs = async function ({ silent = false } = {}) {
@@ -476,6 +572,54 @@ window.loadProjectOptions = async function () {
     renderProjectOptions()
   } catch (error) {
     setMessage(`프로젝트 옵션 로드 실패: ${error.message}`)
+  }
+}
+
+window.loadWorkbenchProjects = async function () {
+  const list = document.querySelector('#projectList')
+
+  if (bossaProjectsLoaded) {
+    renderWorkbenchProjects()
+    return
+  }
+
+  if (list) {
+    list.innerHTML = `
+      <article class="wb-empty">
+        <time>프로젝트</time>
+        <div>
+          <h4>프로젝트를 불러오는 중입니다</h4>
+          <p>Projects 데이터 소스에서 포트폴리오 항목을 가져오고 있습니다.</p>
+        </div>
+        <em>load</em>
+      </article>
+    `
+  }
+
+  try {
+    const response = await fetch('/api/projects')
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '프로젝트를 불러오지 못했습니다')
+    }
+
+    bossaProjects = result.projects || []
+    bossaProjectsLoaded = true
+    renderWorkbenchProjects()
+  } catch (error) {
+    if (list) {
+      list.innerHTML = `
+        <article class="wb-empty">
+          <time>오류</time>
+          <div>
+            <h4>프로젝트를 불러오지 못했습니다</h4>
+            <p>${escapeHtml(error.message)}</p>
+          </div>
+          <em>error</em>
+        </article>
+      `
+    }
   }
 }
 

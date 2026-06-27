@@ -909,7 +909,8 @@ a{
   padding-bottom: 12px;
 }
 
-.wb-list article {
+.wb-list article,
+.wb-archive-log-list article {
   border-bottom: 1px solid #d8d1c5;
 }
 
@@ -936,18 +937,21 @@ a{
   padding-right: 12px;
 }
 
-.wb-list time {
+.wb-list time,
+.wb-archive-log-list time {
   color: #777;
   font-size: 13px;
 }
 
-.wb-list h4 {
+.wb-list h4,
+.wb-archive-log-list h4 {
   margin: 0 0 8px;
   font-size: 24px;
   letter-spacing: -.055em;
 }
 
-.wb-list p {
+.wb-list p,
+.wb-archive-log-list p {
   margin: 0;
   color: #555;
   line-height: 1.7;
@@ -981,7 +985,8 @@ a{
   font-size: 12px;
 }
 
-.wb-list em {
+.wb-list em,
+.wb-archive-log-list em {
   font-style: normal;
   font-size: 12px;
   border: 1px solid #d8d1c5;
@@ -989,21 +994,25 @@ a{
   height: fit-content;
 }
 
-.wb-projects {
+.wb-projects,
+.wb-archive {
   margin-top: 28px;
 }
 
-#projectList {
+#projectList,
+#archiveList {
   margin-top: 18px;
 }
 
-.wb-project-category-menu {
+.wb-project-category-menu,
+.wb-archive-menu {
   display: grid;
   gap: 0;
   border-top: 1px solid #d8d1c5;
 }
 
-.wb-project-category-menu button {
+.wb-project-category-menu button,
+.wb-archive-menu button {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1018,18 +1027,21 @@ a{
   text-align: left;
 }
 
-.wb-project-category-menu span {
+.wb-project-category-menu span,
+.wb-archive-menu span {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -.055em;
 }
 
-.wb-project-category-menu em {
+.wb-project-category-menu em,
+.wb-archive-menu em {
   font-style: normal;
   color: #777;
 }
 
-.wb-project-category-head {
+.wb-project-category-head,
+.wb-archive-category-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1039,17 +1051,23 @@ a{
   padding-bottom: 12px;
 }
 
-.wb-project-category-head button {
+.wb-project-category-head button,
+.wb-archive-category-head button {
   border: 1px solid #d8d1c5;
   background: transparent;
   padding: 9px 12px;
   font: inherit;
 }
 
-.wb-project-category-head h4 {
+.wb-project-category-head h4,
+.wb-archive-category-head h4 {
   margin: 0;
   font-size: 28px;
   letter-spacing: -.055em;
+}
+
+.wb-archive-log-list {
+  border-top: 1px solid #d8d1c5;
 }
 
 .wb-project-card-list {
@@ -1371,7 +1389,11 @@ a{
   .wb-tabs {
     max-width: none;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wb-tab {
+    padding: 10px 8px;
   }
 
   .wb-write > input {
@@ -1503,7 +1525,9 @@ a{
   }
 
   .wb-project-category-menu span,
-  .wb-project-category-head h4 {
+  .wb-archive-menu span,
+  .wb-project-category-head h4,
+  .wb-archive-category-head h4 {
     font-size: 24px;
   }
 
@@ -1531,7 +1555,8 @@ a{
     padding: 18px 0;
   }
 
-  .wb-list h4 {
+  .wb-list h4,
+  .wb-archive-log-list h4 {
     font-size: 22px;
   }
 }

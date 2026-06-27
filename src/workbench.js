@@ -19,8 +19,10 @@ let relatedLogsLoadingProjectId = null
 let organizingLogId = null
 let completionLogId = null
 let projectCreateLogId = null
-const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물']
+let selectedArchiveGroup = null
+const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물', '글']
 const workspaceRecordTypes = ['생각', '회의', '작업']
+const archiveLogGroups = ['생각', '회의', '작업', '자료', '결과물', '글', '기타']
 
 function escapeHtml(text = '') {
   return String(text)
@@ -112,6 +114,69 @@ function projectCategories(projects = bossaProjects) {
       if (b === '기타') return -1
       return a.localeCompare(b, 'ko')
     })
+}
+
+function archiveGroupForLog(log) {
+  return archiveLogGroups.includes(log.type) && log.type !== '기타' ? log.type : '기타'
+}
+
+function archiveLogsForGroup(group) {
+  return bossaLogs.filter(log => archiveGroupForLog(log) === group)
+}
+
+function renderArchiveMenu() {
+  return `
+    <nav class="wb-archive-menu" aria-label="Log type archive">
+      ${archiveLogGroups.map(group => {
+        const count = archiveLogsForGroup(group).length
+
+        return `
+          <button onclick="openArchiveGroup('${escapeAttr(group)}')">
+            <span>${escapeHtml(group)}</span>
+            <em>${count}</em>
+          </button>
+        `
+      }).join('')}
+    </nav>
+  `
+}
+
+function renderArchiveHeader(group) {
+  return `
+    <div class="wb-archive-category-head">
+      <button onclick="closeArchiveGroup()">← 모아보기</button>
+      <h4>${escapeHtml(group)}</h4>
+    </div>
+  `
+}
+
+function renderArchiveLogs(logs = []) {
+  if (!logs.length) {
+    return `
+      <article class="wb-empty">
+        <time>${escapeHtml(selectedArchiveGroup || '모아보기')}</time>
+        <div>
+          <h4>아직 기록이 없습니다.</h4>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return renderLogs(logs)
+}
+
+function renderArchiveWorkbench() {
+  if (!selectedArchiveGroup) {
+    return renderArchiveMenu()
+  }
+
+  return `
+    ${renderArchiveHeader(selectedArchiveGroup)}
+    <div class="wb-archive-log-list">
+      ${renderArchiveLogs(archiveLogsForGroup(selectedArchiveGroup))}
+    </div>
+  `
 }
 
 function renderProjectCategoryMenu(projects = bossaProjects) {
@@ -675,12 +740,14 @@ function renderLogDetailHost() {
 
 function renderWorkbenchLogs(logs = bossaLogs) {
   renderLogList(logs)
+  renderWorkbenchArchive()
   renderLogDetailHost()
 }
 
 function renderWorkbenchView() {
   const logPanel = document.querySelector('#workbenchLogPanel')
   const projectPanel = document.querySelector('#workbenchProjectPanel')
+  const archivePanel = document.querySelector('#workbenchArchivePanel')
   const tabs = document.querySelectorAll('.wb-tab')
 
   for (const tab of tabs) {
@@ -689,12 +756,18 @@ function renderWorkbenchView() {
 
   if (logPanel) logPanel.hidden = workbenchView !== 'logs'
   if (projectPanel) projectPanel.hidden = workbenchView !== 'projects'
+  if (archivePanel) archivePanel.hidden = workbenchView !== 'archive'
 }
 
 function renderWorkbenchProjects(projects = bossaProjects) {
   const list = document.querySelector('#projectList')
   if (list) list.innerHTML = renderProjectWorkbench(projects)
   renderProjectDetailHost()
+}
+
+function renderWorkbenchArchive() {
+  const list = document.querySelector('#archiveList')
+  if (list) list.innerHTML = renderArchiveWorkbench()
 }
 
 function renderProjectOptions() {
@@ -867,6 +940,7 @@ export function workbenchPage() {
         <nav class="wb-tabs" aria-label="Workbench view">
           <button class="wb-tab active" data-view="logs" onclick="switchWorkbenchView('logs')">기록</button>
           <button class="wb-tab" data-view="projects" onclick="switchWorkbenchView('projects')">프로젝트</button>
+          <button class="wb-tab" data-view="archive" onclick="switchWorkbenchView('archive')">모아보기</button>
         </nav>
 
         <div id="workbenchLogPanel">
@@ -925,6 +999,23 @@ export function workbenchPage() {
             </article>
           </div>
         </section>
+        <section id="workbenchArchivePanel" class="wb-archive" hidden>
+          <div class="wb-section-head">
+            <h3>모아보기</h3>
+            <small>archive</small>
+          </div>
+
+          <div id="archiveList">
+            <article class="wb-empty">
+              <time>모아보기</time>
+              <div>
+                <h4>기록을 분류하는 중입니다</h4>
+                <p>유형별로 최근 기록을 모으고 있습니다.</p>
+              </div>
+              <em>load</em>
+            </article>
+          </div>
+        </section>
         <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         <div id="projectDetailHost"></div>
         <div id="createProjectHost"></div>
@@ -946,10 +1037,15 @@ window.switchWorkbenchView = function (view) {
   closeProjectDetail()
   closeCreateProjectModal()
   if (view === 'projects') selectedProjectCategory = null
+  if (view === 'archive') selectedArchiveGroup = null
   renderWorkbenchView()
 
   if (view === 'projects') {
     loadWorkbenchProjects()
+  }
+
+  if (view === 'archive') {
+    renderWorkbenchArchive()
   }
 }
 
@@ -963,6 +1059,18 @@ window.closeProjectCategory = function () {
   selectedProjectCategory = null
   closeProjectDetail()
   renderWorkbenchProjects()
+}
+
+window.openArchiveGroup = function (group) {
+  selectedArchiveGroup = archiveLogGroups.includes(group) ? group : null
+  closeLogDetail()
+  renderWorkbenchArchive()
+}
+
+window.closeArchiveGroup = function () {
+  selectedArchiveGroup = null
+  closeLogDetail()
+  renderWorkbenchArchive()
 }
 
 window.loadBossaLogs = async function ({ silent = false } = {}) {

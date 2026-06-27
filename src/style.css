@@ -473,6 +473,7 @@ a{
 }
 
 .wb-sidebar h1 {
+  margin: 0;
   font-size: 22px;
   letter-spacing: .22em;
 }
@@ -484,15 +485,101 @@ a{
   line-height: 1.7;
 }
 
-.wb-sidebar nav {
-  margin-top: 72px;
-  display: grid;
-  gap: 18px;
+.wb-sidebar-brand p {
+  margin: 8px 0 0;
 }
 
-.wb-sidebar a.active {
-  color: #2e4738;
+.wb-sidebar-status {
+  margin-top: 72px;
+  border-top: 1px solid #d8d1c5;
+  border-bottom: 1px solid #d8d1c5;
+  padding: 22px 0;
+}
+
+.wb-sidebar-status h2 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  letter-spacing: -.055em;
+}
+
+.wb-sidebar-status strong {
+  display: inline-block;
+  border: 1px solid #151515;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wb-sidebar-status p {
+  margin: 18px 0 0;
+  color: #444;
+}
+
+.wb-sidebar-stats {
+  margin-top: 24px;
+}
+
+.wb-sidebar-stats dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.wb-sidebar-stats div {
+  border: 1px solid #d8d1c5;
+  background: #fffdf8;
+  padding: 12px;
+}
+
+.wb-sidebar-stats dt {
+  color: #777;
+  font-size: 11px;
+}
+
+.wb-sidebar-stats dd {
+  margin: 7px 0 0;
+  font-size: 22px;
   font-weight: 800;
+}
+
+.wb-sidebar-recent {
+  margin-top: 28px;
+}
+
+.wb-sidebar-recent h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.wb-sidebar-projects {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wb-sidebar-projects li {
+  border-bottom: 1px solid #d8d1c5;
+  padding-bottom: 8px;
+  color: #444;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.wb-sidebar-empty {
+  margin: 0;
+}
+
+.wb-sidebar-public {
+  width: fit-content;
+  border: 1px solid #151515;
+  background: transparent;
+  color: #151515;
+  padding: 10px 13px;
+  font: inherit;
+  cursor: pointer;
 }
 
 .wb-main {

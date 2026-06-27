@@ -22,7 +22,6 @@ let projectCreateLogId = null
 let selectedArchiveGroup = null
 const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물', '글']
 const workspaceRecordTypes = ['생각', '회의', '작업']
-const archiveLogGroups = ['생각', '회의', '작업', '자료', '결과물', '글', '기타']
 
 function escapeHtml(text = '') {
   return String(text)
@@ -53,6 +52,17 @@ function formatDate(date) {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+  }).format(new Date(date))
+}
+
+function dateKey(date) {
+  if (!date) return ''
+
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).format(new Date(date))
 }
 
@@ -117,26 +127,52 @@ function projectCategories(projects = bossaProjects) {
 }
 
 function archiveGroupForLog(log) {
-  return archiveLogGroups.includes(log.type) && log.type !== '기타' ? log.type : '기타'
+  return log.type?.trim() || '기타'
 }
 
 function archiveLogsForGroup(group) {
   return bossaLogs.filter(log => archiveGroupForLog(log) === group)
 }
 
+function archiveTypeGroups(logs = bossaLogs) {
+  const groups = new Map()
+
+  for (const log of logs) {
+    const group = archiveGroupForLog(log)
+    groups.set(group, (groups.get(group) || 0) + 1)
+  }
+
+  return [...groups.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count
+      return a.name.localeCompare(b.name, 'ko')
+    })
+}
+
 function renderArchiveMenu() {
+  const groups = archiveTypeGroups()
+
+  if (!groups.length) {
+    return `
+      <article class="wb-empty">
+        <time>모아보기</time>
+        <div>
+          <h4>아직 기록이 없습니다.</h4>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
   return `
     <nav class="wb-archive-menu" aria-label="Log type archive">
-      ${archiveLogGroups.map(group => {
-        const count = archiveLogsForGroup(group).length
-
-        return `
-          <button onclick="openArchiveGroup('${escapeAttr(group)}')">
-            <span>${escapeHtml(group)}</span>
-            <em>${count}</em>
-          </button>
-        `
-      }).join('')}
+      ${groups.map(group => `
+        <button onclick="openArchiveGroup('${escapeAttr(group.name)}')">
+          <span>${escapeHtml(group.name)}</span>
+          <em>${group.count}</em>
+        </button>
+      `).join('')}
     </nav>
   `
 }
@@ -176,6 +212,78 @@ function renderArchiveWorkbench() {
     <div class="wb-archive-log-list">
       ${renderArchiveLogs(archiveLogsForGroup(selectedArchiveGroup))}
     </div>
+  `
+}
+
+function todayLogsCount() {
+  const today = dateKey(new Date())
+  return bossaLogs.filter(log => dateKey(log.date) === today).length
+}
+
+function uniqueLogTypeCount() {
+  return new Set(bossaLogs.map(log => log.type?.trim()).filter(Boolean)).size
+}
+
+function renderSidebarProjects() {
+  if (!bossaProjects.length) {
+    return '<p class="wb-sidebar-empty">아직 프로젝트가 없습니다.</p>'
+  }
+
+  return `
+    <ul class="wb-sidebar-projects">
+      ${bossaProjects.slice(0, 3).map(project => `<li>${escapeHtml(project.title)}</li>`).join('')}
+    </ul>
+  `
+}
+
+function renderSidebarWorkspace() {
+  const sidebar = document.querySelector('#workbenchSidebar')
+  if (!sidebar) return
+
+  const todayCount = todayLogsCount()
+  const recentCount = bossaLogs.length || todayCount
+
+  sidebar.innerHTML = `
+    <div>
+      <div class="wb-sidebar-brand">
+        <h1>BOSSA</h1>
+        <p>WORKBENCH</p>
+      </div>
+
+      <section class="wb-sidebar-status" aria-label="Workspace status">
+        <h2>지피터 실장</h2>
+        <strong>출근중</strong>
+        <p>오늘도 기록부터 시작해볼까요?</p>
+      </section>
+
+      <section class="wb-sidebar-stats" aria-label="Today stats">
+        <dl>
+          <div>
+            <dt>오늘 기록</dt>
+            <dd>${todayCount}</dd>
+          </div>
+          <div>
+            <dt>프로젝트</dt>
+            <dd>${bossaProjects.length}</dd>
+          </div>
+          <div>
+            <dt>유형</dt>
+            <dd>${uniqueLogTypeCount()}</dd>
+          </div>
+          <div>
+            <dt>최근 작성</dt>
+            <dd>${recentCount}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="wb-sidebar-recent" aria-label="Recent projects">
+        <h3>최근 프로젝트</h3>
+        ${renderSidebarProjects()}
+      </section>
+    </div>
+
+    <button class="wb-sidebar-public" onclick="goHome()">공개 사이트 →</button>
   `
 }
 
@@ -741,6 +849,7 @@ function renderLogDetailHost() {
 function renderWorkbenchLogs(logs = bossaLogs) {
   renderLogList(logs)
   renderWorkbenchArchive()
+  renderSidebarWorkspace()
   renderLogDetailHost()
 }
 
@@ -762,6 +871,7 @@ function renderWorkbenchView() {
 function renderWorkbenchProjects(projects = bossaProjects) {
   const list = document.querySelector('#projectList')
   if (list) list.innerHTML = renderProjectWorkbench(projects)
+  renderSidebarWorkspace()
   renderProjectDetailHost()
 }
 
@@ -909,27 +1019,12 @@ function setEditingState(log) {
 export function workbenchPage() {
   return `
     <div class="workbench">
-      <aside class="wb-sidebar">
-        <div>
-          <h1>BOSSA</h1>
-          <p>WORKBENCH</p>
-
-          <nav>
-            <a class="active">오늘</a>
-            <a>기록</a>
-            <a>프로젝트</a>
-            <a>생각</a>
-            <a>이미지</a>
-          </nav>
-        </div>
-
-        <small>bossa.kr/me<br>나만 보는 작업대</small>
-      </aside>
+      <aside id="workbenchSidebar" class="wb-sidebar"></aside>
 
       <main class="wb-main">
         <header class="wb-top">
           <span>${todayLabel()}</span>
-          <button onclick="goHome()">Gallery 보기</button>
+          <button onclick="goHome()">공개 사이트</button>
         </header>
 
         <section class="wb-hero">
@@ -1026,9 +1121,11 @@ export function workbenchPage() {
 
 export function initWorkbench() {
   setupEditorPaste()
+  renderSidebarWorkspace()
   renderWorkbenchView()
   loadBossaLogs()
   loadProjectOptions()
+  loadWorkbenchProjects()
 }
 
 window.switchWorkbenchView = function (view) {
@@ -1062,7 +1159,7 @@ window.closeProjectCategory = function () {
 }
 
 window.openArchiveGroup = function (group) {
-  selectedArchiveGroup = archiveLogGroups.includes(group) ? group : null
+  selectedArchiveGroup = archiveTypeGroups().some(item => item.name === group) ? group : null
   closeLogDetail()
   renderWorkbenchArchive()
 }

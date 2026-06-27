@@ -1118,6 +1118,48 @@ a{
   cursor: zoom-in;
 }
 
+.wb-project-summary-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.wb-project-summary-strip span {
+  border: 1px solid #d8d1c5;
+  color: #555;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.wb-project-workspace-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-project-workspace-tabs button {
+  border: 1px solid #d8d1c5;
+  background: transparent;
+  color: #555;
+  padding: 10px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.wb-project-workspace-tabs button.active {
+  border-color: #151515;
+  background: #111;
+  color: #fff;
+}
+
+.wb-project-workspace-panel {
+  min-height: 220px;
+}
+
 .wb-project-document {
   margin-top: 20px;
   color: #333;
@@ -1192,13 +1234,41 @@ a{
   margin-top: 12px;
 }
 
+.wb-related-timeline {
+  position: relative;
+  margin-left: 7px;
+  padding-left: 22px;
+}
+
+.wb-related-timeline::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 10px;
+  left: 0;
+  width: 1px;
+  background: #d8d1c5;
+}
+
 .wb-related-log {
+  position: relative;
   display: grid;
   grid-template-columns: 86px 1fr;
   gap: 16px;
   padding: 16px 0;
   border-bottom: 1px solid #d8d1c5;
   cursor: pointer;
+}
+
+.wb-related-timeline .wb-related-log::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: -26px;
+  width: 9px;
+  height: 9px;
+  background: #fffdf8;
+  border: 1px solid #151515;
 }
 
 .wb-related-log h5 {
@@ -1335,6 +1405,16 @@ a{
     top: 50%;
   }
 
+  .wb-project-workspace-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .wb-project-workspace-tabs button {
+    padding: 9px 4px;
+    font-size: 13px;
+  }
+
   .wb-detail-modal h3 {
     font-size: 25px;
   }
@@ -1393,6 +1473,15 @@ a{
   .wb-related-log {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .wb-related-timeline {
+    margin-left: 5px;
+    padding-left: 18px;
+  }
+
+  .wb-related-timeline .wb-related-log::before {
+    left: -22px;
   }
 
   .wb-log-summary {

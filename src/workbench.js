@@ -11,6 +11,7 @@ let bossaProjects = []
 let bossaProjectsLoaded = false
 let selectedProjectCategory = null
 let selectedProjectId = null
+let selectedProjectTab = 'intro'
 let projectBodiesByProject = {}
 let projectBodyLoadingProjectId = null
 let relatedLogsByProject = {}
@@ -200,6 +201,10 @@ function currentProject() {
   return bossaProjects.find(project => project.id === selectedProjectId) || null
 }
 
+function relatedLogCount(project) {
+  return relatedLogsByProject[project.id]?.length || 0
+}
+
 function renderRelatedLogCard(log) {
   const tags = Array.isArray(log.tags) ? log.tags : []
   const meta = [
@@ -248,6 +253,99 @@ function renderRelatedLogs(project) {
   }
 
   return relatedLogs.map(renderRelatedLogCard).join('')
+}
+
+function renderProjectSummaryStrip(project) {
+  return `
+    <div class="wb-project-summary-strip">
+      <span>기록 ${relatedLogCount(project)}</span>
+      <span>자료 0</span>
+      <span>결과물 0</span>
+    </div>
+  `
+}
+
+function renderProjectWorkspaceTabs() {
+  const tabs = [
+    ['intro', '소개'],
+    ['logs', '기록'],
+    ['assets', '자료'],
+    ['results', '결과물'],
+  ]
+
+  return `
+    <nav class="wb-project-workspace-tabs" aria-label="Project workspace sections">
+      ${tabs.map(([tab, label]) => `
+        <button
+          class="${selectedProjectTab === tab ? 'active' : ''}"
+          onclick="switchProjectTab('${tab}')"
+        >${label}</button>
+      `).join('')}
+    </nav>
+  `
+}
+
+function renderProjectWorkspaceEmpty(title, copy) {
+  return `
+    <article class="wb-empty wb-workspace-empty">
+      <div>
+        <h4>${escapeHtml(title)}</h4>
+        <p>${escapeHtml(copy)}</p>
+      </div>
+    </article>
+  `
+}
+
+function renderProjectIntroPanel(project, meta) {
+  return `
+    <section class="wb-project-workspace-panel" data-project-tab="intro">
+      ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+      <h3>${escapeHtml(project.title)}</h3>
+      ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+      ${renderProjectDocument(project)}
+    </section>
+  `
+}
+
+function renderProjectLogsPanel(project) {
+  return `
+    <section class="wb-project-workspace-panel wb-project-logs-panel" data-project-tab="logs">
+      <div class="wb-section-head">
+        <h3>관련 기록</h3>
+      </div>
+      <div class="wb-related-list wb-related-timeline">
+        ${renderRelatedLogs(project)}
+      </div>
+    </section>
+  `
+}
+
+function renderProjectWorkspacePanel(project, meta) {
+  if (selectedProjectTab === 'logs') return renderProjectLogsPanel(project)
+
+  if (selectedProjectTab === 'assets') {
+    return `
+      <section class="wb-project-workspace-panel" data-project-tab="assets">
+        ${renderProjectWorkspaceEmpty(
+          '아직 연결된 자료가 없습니다.',
+          '이미지, PDF, 참고 링크 등을 나중에 이곳에 모을 수 있습니다.',
+        )}
+      </section>
+    `
+  }
+
+  if (selectedProjectTab === 'results') {
+    return `
+      <section class="wb-project-workspace-panel" data-project-tab="results">
+        ${renderProjectWorkspaceEmpty(
+          '아직 등록된 결과물이 없습니다.',
+          '최종 로고, 책, 패키지, 페이지 등을 이곳에 정리할 수 있습니다.',
+        )}
+      </section>
+    `
+  }
+
+  return renderProjectIntroPanel(project, meta)
 }
 
 function renderProjectBlock(block) {
@@ -304,19 +402,9 @@ function renderProjectDetailCard(project) {
     <div class="wb-project-lightbox">
       <div class="wb-detail-overlay"></div>
       <div class="wb-detail-modal wb-project-detail-modal" onclick="event.stopPropagation()">
-        ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
-        <h3>${escapeHtml(project.title)}</h3>
-        ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
-        ${renderProjectDocument(project)}
-
-        <section class="wb-related-section">
-          <div class="wb-section-head">
-            <h3>관련 기록</h3>
-          </div>
-          <div class="wb-related-list">
-            ${renderRelatedLogs(project)}
-          </div>
-        </section>
+        ${renderProjectSummaryStrip(project)}
+        ${renderProjectWorkspaceTabs()}
+        ${renderProjectWorkspacePanel(project, meta)}
 
         <div class="wb-detail-actions">
           ${project.url ? `<a class="wb-notion-link" href="${escapeAttr(project.url)}" target="_blank" rel="noopener noreferrer">노션에서 열기</a>` : ''}
@@ -917,6 +1005,7 @@ window.openProjectDetail = function (id) {
   closeLogDetail()
   closeCreateProjectModal()
   selectedProjectId = id
+  selectedProjectTab = 'intro'
   renderProjectDetailHost()
   loadProjectDocument(project)
   loadRelatedLogs(project)
@@ -924,8 +1013,14 @@ window.openProjectDetail = function (id) {
 
 window.closeProjectDetail = function () {
   selectedProjectId = null
+  selectedProjectTab = 'intro'
   projectBodyLoadingProjectId = null
   relatedLogsLoadingProjectId = null
+  renderProjectDetailHost()
+}
+
+window.switchProjectTab = function (tab) {
+  selectedProjectTab = ['intro', 'logs', 'assets', 'results'].includes(tab) ? tab : 'intro'
   renderProjectDetailHost()
 }
 

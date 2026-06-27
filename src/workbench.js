@@ -373,6 +373,51 @@ function renderProjectCategoryHeader(category) {
   `
 }
 
+function projectImageCandidates(project = {}) {
+  const candidates = []
+  const push = value => {
+    if (value && !candidates.includes(value)) candidates.push(value)
+  }
+
+  if (Array.isArray(project.imageCandidates)) {
+    project.imageCandidates.forEach(push)
+  }
+
+  push(project.image)
+  push(project.thumbnail)
+  push(project.cover)
+
+  return candidates
+}
+
+function renderProjectImagePlaceholder(project, variant = 'card') {
+  const initials = (project.title || 'BOSSA').trim().slice(0, 2).toUpperCase()
+
+  return `
+    <div class="wb-project-image-placeholder wb-project-image-placeholder-${escapeAttr(variant)}">
+      <span>${escapeHtml(initials)}</span>
+    </div>
+  `
+}
+
+function renderProjectImage(project, className = '', variant = 'card') {
+  const candidates = projectImageCandidates(project)
+  if (!candidates.length) return renderProjectImagePlaceholder(project, variant)
+
+  return `
+    <img
+      class="${escapeAttr(className)}"
+      src="${escapeAttr(candidates[0])}"
+      alt="${escapeAttr(project.title)}"
+      data-image-candidates="${escapeAttr(encodeURIComponent(JSON.stringify(candidates)))}"
+      data-image-index="0"
+      data-image-title="${escapeAttr(project.title || 'BOSSA')}"
+      data-image-variant="${escapeAttr(variant)}"
+      onerror="handleProjectImageError(this)"
+    />
+  `
+}
+
 function renderProjectCards(projects = []) {
   if (!projects.length) {
     return `
@@ -392,7 +437,7 @@ function renderProjectCards(projects = []) {
 
     return `
       <article class="wb-project-card" onclick="openProjectDetail('${escapeAttr(project.id)}')">
-        ${project.image ? `<img src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+        ${renderProjectImage(project, 'wb-project-card-image', 'card')}
         <div>
           ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
           <h4>${escapeHtml(project.title)}</h4>
@@ -580,7 +625,7 @@ function renderProjectWorkspaceTabs() {
 function renderProjectIntroPanel(project, meta) {
   return `
     <section class="wb-project-workspace-panel" data-project-tab="intro">
-      ${project.image ? `<img class="wb-project-detail-image" src="${escapeAttr(project.image)}" alt="${escapeAttr(project.title)}" />` : ''}
+      ${renderProjectImage(project, 'wb-project-detail-image', 'detail')}
       <h3>${escapeHtml(project.title)}</h3>
       ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
       ${renderProjectDocument(project)}
@@ -1301,12 +1346,41 @@ window.switchWorkbenchView = function (view) {
   renderWorkbenchView()
 
   if (view === 'projects') {
-    loadWorkbenchProjects()
+    loadWorkbenchProjects({ force: true })
   }
 
   if (view === 'archive') {
     renderWorkbenchArchive()
   }
+}
+
+window.handleProjectImageError = function (img) {
+  let candidates = []
+
+  try {
+    candidates = JSON.parse(decodeURIComponent(img.dataset.imageCandidates || '[]'))
+  } catch {
+    candidates = []
+  }
+
+  const currentIndex = Number(img.dataset.imageIndex || 0)
+  const nextUrl = candidates[currentIndex + 1]
+
+  if (nextUrl) {
+    img.dataset.imageIndex = String(currentIndex + 1)
+    img.src = nextUrl
+    return
+  }
+
+  const variant = img.dataset.imageVariant || 'card'
+  const title = img.dataset.imageTitle || 'BOSSA'
+  const placeholder = document.createElement('div')
+  placeholder.className = `wb-project-image-placeholder wb-project-image-placeholder-${variant}`
+
+  const label = document.createElement('span')
+  label.textContent = title.trim().slice(0, 2).toUpperCase() || 'B'
+  placeholder.appendChild(label)
+  img.replaceWith(placeholder)
 }
 
 window.openProjectCategory = function (category) {
@@ -1443,10 +1517,10 @@ window.loadProjectOptions = async function () {
   }
 }
 
-window.loadWorkbenchProjects = async function () {
+window.loadWorkbenchProjects = async function ({ force = false } = {}) {
   const list = document.querySelector('#projectList')
 
-  if (bossaProjectsLoaded) {
+  if (bossaProjectsLoaded && !force) {
     renderWorkbenchProjects()
     return
   }
@@ -1465,7 +1539,7 @@ window.loadWorkbenchProjects = async function () {
   }
 
   try {
-    const response = await fetch('/api/projects?includePrivate=1')
+    const response = await fetch('/api/projects?includePrivate=1', { cache: 'no-store' })
     const result = await readApiResponse(response)
 
     if (!result.ok) {

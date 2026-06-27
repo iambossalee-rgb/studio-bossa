@@ -26,6 +26,60 @@ function getPageCoverUrl(page) {
   return getFileUrl(page.cover)
 }
 
+function getUrl(prop) {
+  return prop?.url || ''
+}
+
+function isVercelBlobUrl(url = '') {
+  return /\.blob\.vercel-storage\.com\//.test(url)
+}
+
+function compactUnique(items = []) {
+  return items.filter((item, index, array) => item && array.indexOf(item) === index)
+}
+
+function getImageUrlsFromProperty(prop) {
+  if (!prop) return []
+
+  if (prop.type === 'files') return prop.files?.map(getFileUrl).filter(Boolean) || []
+  if (prop.type === 'url') return [getUrl(prop)].filter(Boolean)
+  if (prop.type === 'rich_text') {
+    return getText(prop)
+      .split(/\s+/)
+      .map(item => item.trim())
+      .filter(item => /^https?:\/\//.test(item))
+  }
+
+  return []
+}
+
+function getProjectImageCandidates(page) {
+  const props = page.properties || {}
+  const imageProperties = [
+    props['대표이미지'],
+    props['이미지'],
+    props['image'],
+    props['Image'],
+    props['cover'],
+    props['Cover'],
+    props['thumbnail'],
+    props['Thumbnail'],
+    props['썸네일'],
+    props['이미지URL'],
+    props['Image URLs'],
+  ]
+
+  const propertyImages = compactUnique(imageProperties.flatMap(getImageUrlsFromProperty))
+  const blobImages = propertyImages.filter(isVercelBlobUrl)
+  const nonBlobImages = propertyImages.filter(url => !isVercelBlobUrl(url))
+
+  return compactUnique([
+    ...blobImages,
+    ...nonBlobImages,
+    getPageCoverUrl(page),
+  ])
+}
+
 function getProjectsDataSourceId() {
   if (!process.env.NOTION_DATABASE_ID) {
     throw new Error('Missing NOTION_DATABASE_ID for Projects data source.')
@@ -36,7 +90,8 @@ function getProjectsDataSourceId() {
 
 function toProject(page) {
   const props = page.properties
-  const image = getNotionImageUrl(props['대표이미지']) || getPageCoverUrl(page)
+  const imageCandidates = getProjectImageCandidates(page)
+  const image = imageCandidates[0] || ''
 
   return {
     id: page.id,
@@ -50,12 +105,15 @@ function toProject(page) {
     year: getNumber(props['년도']) || getNumber(props['연도']),
     summary: getText(props['요약']),
     image,
+    imageCandidates,
     url: page.url || '',
     public: getCheckbox(props['공개']),
   }
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate')
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }

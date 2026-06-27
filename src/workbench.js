@@ -491,6 +491,10 @@ function relatedProjectLogs(project) {
 function projectLogsForSection(project, section) {
   const logs = relatedProjectLogs(project)
 
+  if (section === 'timeline') {
+    return [...logs].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
+  }
+
   if (section === 'assets') {
     return logs.filter(log => log.type === '자료')
   }
@@ -504,6 +508,7 @@ function projectLogsForSection(project, section) {
 
 function projectSectionCounts(project) {
   return {
+    total: projectLogsForSection(project, 'timeline').length,
     logs: projectLogsForSection(project, 'logs').length,
     assets: projectLogsForSection(project, 'assets').length,
     results: projectLogsForSection(project, 'results').length,
@@ -538,6 +543,20 @@ function renderRelatedLogCard(log, { variant = 'timeline' } = {}) {
         <div>
           <h5>${escapeHtml(log.title)}</h5>
           <p>${escapeHtml(logPreview(log))}</p>
+        </div>
+      </article>
+    `
+  }
+
+  if (variant === 'project-history') {
+    return `
+      <article class="wb-related-log wb-project-history-item" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+        <time>${escapeHtml(formatDate(log.date))}</time>
+        <div>
+          ${logImages(log)[0] ? `<img class="wb-project-history-thumb" src="${escapeAttr(logImages(log)[0])}" alt="${escapeAttr(log.title)}" />` : ''}
+          <h5>${escapeHtml(log.title)}</h5>
+          <p>${escapeHtml(logPreview(log))}</p>
+          ${meta.length ? `<div class="wb-log-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
         </div>
       </article>
     `
@@ -595,6 +614,7 @@ function renderProjectSummaryStrip(project) {
 
   return `
     <div class="wb-project-summary-strip">
+      <span>전체 ${counts.total}</span>
       <span>기록 ${counts.logs}</span>
       <span>자료 ${counts.assets}</span>
       <span>결과물 ${counts.results}</span>
@@ -605,6 +625,7 @@ function renderProjectSummaryStrip(project) {
 function renderProjectWorkspaceTabs() {
   const tabs = [
     ['intro', '소개'],
+    ['timeline', '타임라인'],
     ['logs', '기록'],
     ['assets', '자료'],
     ['results', '결과물'],
@@ -630,6 +651,24 @@ function renderProjectIntroPanel(project, meta) {
       ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
       ${renderProjectDocument(project)}
       ${project.url ? `<a class="wb-notion-link wb-project-intro-link" href="${escapeAttr(project.url)}" target="_blank" rel="noopener noreferrer">노션에서 열기</a>` : ''}
+    </section>
+  `
+}
+
+function renderProjectTimelinePanel(project) {
+  return `
+    <section class="wb-project-workspace-panel wb-project-history-panel" data-project-tab="timeline">
+      <div class="wb-section-head">
+        <h3>프로젝트 히스토리</h3>
+      </div>
+      <div class="wb-related-list wb-related-timeline wb-project-history-list">
+        ${renderRelatedLogs(project, {
+          section: 'timeline',
+          emptyTitle: '아직 프로젝트 히스토리가 없습니다.',
+          emptyBody: '이 프로젝트로 기록을 남기면 이곳에 시간순으로 쌓입니다.',
+          variant: 'project-history',
+        })}
+      </div>
     </section>
   `
 }
@@ -691,6 +730,8 @@ function renderProjectResultsPanel(project) {
 }
 
 function renderProjectWorkspacePanel(project, meta) {
+  if (selectedProjectTab === 'timeline') return renderProjectTimelinePanel(project)
+
   if (selectedProjectTab === 'logs') return renderProjectLogsPanel(project)
 
   if (selectedProjectTab === 'assets') return renderProjectAssetsPanel(project)
@@ -1587,7 +1628,7 @@ window.closeProjectDetail = function () {
 }
 
 window.switchProjectTab = function (tab) {
-  selectedProjectTab = ['intro', 'logs', 'assets', 'results'].includes(tab) ? tab : 'intro'
+  selectedProjectTab = ['intro', 'timeline', 'logs', 'assets', 'results'].includes(tab) ? tab : 'intro'
   renderProjectDetailHost()
 }
 

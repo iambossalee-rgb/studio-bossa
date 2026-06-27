@@ -1351,7 +1351,7 @@ a{
 
 .wb-project-workspace-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 14px;
@@ -1491,6 +1491,24 @@ a{
   height: 9px;
   background: #fffdf8;
   border: 1px solid #151515;
+}
+
+.wb-project-history-list {
+  margin-top: 8px;
+}
+
+.wb-project-history-item {
+  grid-template-columns: 104px 1fr;
+}
+
+.wb-project-history-thumb {
+  display: block;
+  width: min(180px, 100%);
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #f3efe7;
+  border: 1px solid #d8d1c5;
+  margin-bottom: 10px;
 }
 
 .wb-resource-list,
@@ -1714,7 +1732,7 @@ a{
   }
 
   .wb-project-workspace-tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -1783,6 +1801,10 @@ a{
   .wb-related-log {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .wb-project-history-item {
+    grid-template-columns: 1fr;
   }
 
   .wb-related-timeline {

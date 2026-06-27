@@ -55,13 +55,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return res.status(500).json({
-      ok: false,
-      error: 'Missing BLOB_READ_WRITE_TOKEN. Add a Vercel Blob read/write token to the environment.',
-    })
-  }
-
   try {
     const { files } = await parseForm(req)
     const file = firstFile(files)
@@ -82,13 +75,15 @@ export default async function handler(req, res) {
     const blob = await put(safeFileName(file), data, {
       access: 'public',
       contentType: file.mimetype,
-      token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
     return res.status(200).json({ ok: true, url: blob.url })
   } catch (error) {
+    const missingCredentials = error.message?.includes('No blob credentials found')
     const message = error.code === 1009
       ? '이미지는 5MB 이하만 업로드할 수 있습니다.'
+      : missingCredentials
+        ? 'Blob Store 연결 정보를 찾지 못했습니다. Vercel Blob Store가 이 프로젝트와 현재 환경에 연결되어 있는지 확인해주세요.'
       : error.message
 
     return res.status(500).json({ ok: false, error: message })

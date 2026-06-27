@@ -21,8 +21,13 @@ let completionLogId = null
 let projectCreateLogId = null
 let selectedArchiveGroup = null
 let captureTypePreset = ''
+let captureImageFiles = []
+let detailImageFiles = []
+let detailImageUrls = []
 const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물', '글']
 const workspaceRecordTypes = ['생각', '회의', '작업']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 function escapeHtml(text = '') {
   return String(text)
@@ -93,6 +98,45 @@ function renderMetaChips(log) {
   return chips.length
     ? `<div class="wb-log-meta">${chips.map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}</div>`
     : ''
+}
+
+function logImages(log) {
+  return Array.isArray(log.images) ? log.images : log.image ? [log.image] : []
+}
+
+function imageId() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function renderImagePreviewItems(items = [], removeHandler = '') {
+  if (!items.length) return ''
+
+  return `
+    <div class="wb-image-preview-grid">
+      ${items.map(item => `
+        <figure class="wb-image-preview">
+          <img src="${escapeAttr(item.url)}" alt="${escapeAttr(item.name || 'uploaded image')}" />
+          ${removeHandler ? `<button type="button" onclick="${removeHandler}('${escapeAttr(item.id)}')">삭제</button>` : ''}
+        </figure>
+      `).join('')}
+    </div>
+  `
+}
+
+function renderLogImages(log, { editable = false } = {}) {
+  const items = logImages(log).map(url => ({ id: url, url, name: 'log image' }))
+  if (!items.length) return ''
+
+  return `
+    <div class="wb-log-images">
+      ${items.map(item => `
+        <figure>
+          <img src="${escapeAttr(item.url)}" alt="${escapeAttr(log.title)}" onclick="openLogImageLightbox('${escapeAttr(item.url)}')" />
+          ${editable ? `<button type="button" onclick="removeExistingDetailImage('${escapeAttr(item.url)}')">삭제</button>` : ''}
+        </figure>
+      `).join('')}
+    </div>
+  `
 }
 
 function projectMeta(project) {
@@ -432,6 +476,7 @@ function renderRelatedLogCard(log, { variant = 'timeline' } = {}) {
   if (variant === 'resource') {
     return `
       <article class="wb-related-log wb-related-log-resource" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+        ${logImages(log)[0] ? `<img class="wb-related-thumb" src="${escapeAttr(logImages(log)[0])}" alt="${escapeAttr(log.title)}" />` : ''}
         <div>
           <h5>${escapeHtml(log.title)}</h5>
           <time>${escapeHtml(formatDate(log.date))}</time>
@@ -444,7 +489,7 @@ function renderRelatedLogCard(log, { variant = 'timeline' } = {}) {
   if (variant === 'result') {
     return `
       <article class="wb-related-log wb-related-log-result" onclick="openRelatedLog('${escapeAttr(log.id)}')">
-        ${log.image ? `<img src="${escapeAttr(log.image)}" alt="${escapeAttr(log.title)}" />` : ''}
+        ${logImages(log)[0] ? `<img src="${escapeAttr(logImages(log)[0])}" alt="${escapeAttr(log.title)}" />` : ''}
         <div>
           <h5>${escapeHtml(log.title)}</h5>
           <p>${escapeHtml(logPreview(log))}</p>
@@ -740,6 +785,8 @@ function renderLogDetailCard(log) {
     ? `<textarea id="detailContent" class="wb-detail-body-input" placeholder="본문">${escapeHtml(log.content || '')}</textarea>`
     : `<div class="wb-detail-body">${escapeHtml(log.content || '본문이 비어 있습니다.')}</div>`
   const completionState = renderCompletionState(log)
+  const detailImages = renderLogImages({ ...log, images: detailImageUrls }, { editable: isMetadataEditing })
+  const stagedDetailImages = renderImagePreviewItems(detailImageFiles, 'removeDetailImage')
 
   return `
     <div class="wb-detail-lightbox">
@@ -754,6 +801,15 @@ function renderLogDetailCard(log) {
         </div>
         ${detailTitle}
         ${detailBody}
+        ${detailImages}
+        ${isMetadataEditing ? `
+          <div class="wb-image-upload wb-detail-image-upload">
+            <label for="detailImages">이미지 추가</label>
+            <input id="detailImages" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="handleDetailImages(event)" />
+            <p>이미지는 5MB 이하의 JPG, PNG, WEBP, GIF만 가능합니다.</p>
+            ${stagedDetailImages}
+          </div>
+        ` : ''}
         ${completionState}
         <div class="wb-detail-fields" ${completionState ? 'hidden' : ''}>
           <input id="detailProject" list="logProjectOptions" value="${escapeAttr(log.project || '')}" placeholder="프로젝트" ${editLock} />
@@ -824,6 +880,7 @@ function renderLogs(logs = []) {
         <time>${escapeHtml(formatDate(log.date))}</time>
         <div>
           <h4>${escapeHtml(log.title)}</h4>
+          ${logImages(log)[0] ? `<img class="wb-log-thumb" src="${escapeAttr(logImages(log)[0])}" alt="${escapeAttr(log.title)}" />` : ''}
           <p>${escapeHtml(logPreview(log))}</p>
           ${renderMetaChips(log)}
         </div>
@@ -837,6 +894,89 @@ function renderLogs(logs = []) {
 function setMessage(text) {
   const message = document.querySelector('#saveMessage')
   if (message) message.textContent = text
+}
+
+function validateImageFile(file) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return 'JPG, PNG, WEBP, GIF 이미지만 업로드할 수 있습니다.'
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return '이미지는 5MB 이하만 업로드할 수 있습니다.'
+  }
+
+  return ''
+}
+
+function addImageFiles(target, files = []) {
+  const added = []
+
+  for (const file of files) {
+    const error = validateImageFile(file)
+    if (error) {
+      setMessage(error)
+      continue
+    }
+
+    added.push({
+      id: imageId(),
+      file,
+      name: file.name,
+      url: URL.createObjectURL(file),
+    })
+  }
+
+  return [...target, ...added]
+}
+
+function revokeImageItems(items = []) {
+  for (const item of items) {
+    if (item.url?.startsWith('blob:')) URL.revokeObjectURL(item.url)
+  }
+}
+
+async function uploadImageFile(item) {
+  const formData = new FormData()
+  formData.append('file', item.file)
+
+  const response = await fetch('/api/upload-image', {
+    method: 'POST',
+    body: formData,
+  })
+  const result = await readApiResponse(response)
+
+  if (!result.ok || !result.url) {
+    throw new Error(result.error || '이미지 업로드 실패')
+  }
+
+  return result.url
+}
+
+async function uploadImageItems(items = []) {
+  const urls = []
+
+  for (const item of items) {
+    urls.push(await uploadImageFile(item))
+  }
+
+  return urls
+}
+
+function resetCaptureImages() {
+  revokeImageItems(captureImageFiles)
+  captureImageFiles = []
+  renderCaptureImagePreviews()
+}
+
+function resetDetailImages() {
+  revokeImageItems(detailImageFiles)
+  detailImageFiles = []
+  detailImageUrls = []
+}
+
+function renderCaptureImagePreviews() {
+  const host = document.querySelector('#captureImagePreviews')
+  if (host) host.innerHTML = renderImagePreviewItems(captureImageFiles, 'removeCaptureImage')
 }
 
 function setSelectValue(selector, value) {
@@ -1001,6 +1141,7 @@ function upsertLog(log) {
     ...bossaLogs.filter(item => item.id !== log.id),
   ]
   selectedLogId = log.id
+  detailImageUrls = logImages(log)
   renderWorkbenchLogs()
 
   if (log.project && !bossaProjectOptions.some(project => project.name === log.project)) {
@@ -1062,6 +1203,13 @@ export function workbenchPage() {
               <datalist id="logProjectOptions"></datalist>
               <datalist id="logTypeOptions"></datalist>
               <datalist id="logTagOptions"></datalist>
+            </div>
+
+            <div class="wb-image-upload">
+              <label for="logImages">이미지</label>
+              <input id="logImages" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="handleCaptureImages(event)" />
+              <p>이미지는 5MB 이하의 JPG, PNG, WEBP, GIF만 가능합니다.</p>
+              <div id="captureImagePreviews"></div>
             </div>
 
             <div class="wb-actions">
@@ -1183,6 +1331,57 @@ window.closeArchiveGroup = function () {
   selectedArchiveGroup = null
   closeLogDetail()
   renderWorkbenchArchive()
+}
+
+window.handleCaptureImages = function (event) {
+  captureImageFiles = addImageFiles(captureImageFiles, Array.from(event.target.files || []))
+  event.target.value = ''
+  renderCaptureImagePreviews()
+}
+
+window.removeCaptureImage = function (id) {
+  const item = captureImageFiles.find(image => image.id === id)
+  revokeImageItems(item ? [item] : [])
+  captureImageFiles = captureImageFiles.filter(image => image.id !== id)
+  renderCaptureImagePreviews()
+}
+
+window.handleDetailImages = function (event) {
+  detailImageFiles = addImageFiles(detailImageFiles, Array.from(event.target.files || []))
+  event.target.value = ''
+  renderLogDetailHost()
+}
+
+window.removeDetailImage = function (id) {
+  const item = detailImageFiles.find(image => image.id === id)
+  revokeImageItems(item ? [item] : [])
+  detailImageFiles = detailImageFiles.filter(image => image.id !== id)
+  renderLogDetailHost()
+}
+
+window.removeExistingDetailImage = function (url) {
+  detailImageUrls = detailImageUrls.filter(imageUrl => imageUrl !== url)
+  renderLogDetailHost()
+}
+
+window.openLogImageLightbox = function (url) {
+  const host = document.querySelector('#createProjectHost')
+  if (!host) return
+
+  host.innerHTML = `
+    <div class="wb-image-lightbox">
+      <div class="wb-delete-confirm-overlay" onclick="closeLogImageLightbox()"></div>
+      <figure onclick="event.stopPropagation()">
+        <img src="${escapeAttr(url)}" alt="" />
+        <button onclick="closeLogImageLightbox()">닫기</button>
+      </figure>
+    </div>
+  `
+}
+
+window.closeLogImageLightbox = function () {
+  const host = document.querySelector('#createProjectHost')
+  if (host) host.innerHTML = ''
 }
 
 window.loadBossaLogs = async function ({ silent = false } = {}) {
@@ -1429,7 +1628,9 @@ window.openRelatedLog = function (id) {
     ...bossaLogs.filter(item => item.id !== log.id),
   ]
   closeProjectDetail()
+  resetDetailImages()
   selectedLogId = log.id
+  detailImageUrls = logImages(log)
   editingLogId = null
   metadataEditingLogId = null
   deleteConfirmLogId = null
@@ -1459,7 +1660,9 @@ window.openLogDetail = function (id) {
   const log = bossaLogs.find(item => item.id === id)
   if (!log) return
 
+  resetDetailImages()
   selectedLogId = id
+  detailImageUrls = logImages(log)
   editingLogId = null
   metadataEditingLogId = null
   deleteConfirmLogId = null
@@ -1477,6 +1680,7 @@ window.closeLogDetail = function () {
   deleteConfirmLogId = null
   organizingLogId = null
   completionLogId = null
+  resetDetailImages()
   closeCreateProjectModal()
   renderWorkbenchLogs()
 }
@@ -1491,12 +1695,15 @@ window.editSelectedLog = function () {
 }
 
 window.cancelLogEditing = function () {
+  const log = currentLog()
   setEditingState(null)
   metadataEditingLogId = null
   deleteConfirmLogId = null
   organizingLogId = null
   completionLogId = null
   captureTypePreset = ''
+  resetDetailImages()
+  if (log) detailImageUrls = logImages(log)
   setMessage('')
 }
 
@@ -1534,6 +1741,7 @@ window.confirmDeleteLog = async function (id) {
     deleteConfirmLogId = null
     organizingLogId = null
     completionLogId = null
+    resetDetailImages()
     closeCreateProjectModal()
     renderWorkbenchLogs()
     setMessage('삭제되었습니다.')
@@ -1552,6 +1760,7 @@ function detailMetadataPayload(log) {
     tags: [...new Set(parseTags(document.querySelector('#detailTags')?.value || ''))],
     status: document.querySelector('#detailStatus')?.value || '작업중',
     isPublic: Boolean(document.querySelector('#detailPublic')?.checked),
+    images: detailImageUrls,
   }
 }
 
@@ -1584,7 +1793,13 @@ window.saveLogMetadata = async function () {
   const shouldShowCompletion = organizingLogId === log.id
 
   try {
-    const updatedLog = await saveLogPayload(detailMetadataPayload(log), { successMessage: '저장되었습니다.' })
+    const uploadedImages = await uploadImageItems(detailImageFiles)
+    const updatedLog = await saveLogPayload({
+      ...detailMetadataPayload(log),
+      images: [...detailImageUrls, ...uploadedImages],
+    }, { successMessage: '저장되었습니다.' })
+    resetDetailImages()
+    detailImageUrls = logImages(updatedLog)
     selectedLogId = updatedLog.id
     metadataEditingLogId = null
     editingLogId = null
@@ -1603,6 +1818,7 @@ window.continueWriting = function () {
   metadataEditingLogId = null
   editingLogId = null
   captureTypePreset = ''
+  resetCaptureImages()
   closeCreateProjectModal()
   renderWorkbenchLogs()
   setMessage('')
@@ -1697,10 +1913,16 @@ window.createBossaLog = async function () {
   message.textContent = '저장 중...'
 
   try {
+    const uploadedImages = isEditing
+      ? await uploadImageItems(detailImageFiles)
+      : await uploadImageItems(captureImageFiles)
+    const images = isEditing ? [...detailImageUrls, ...uploadedImages] : uploadedImages
     const log = await saveLogPayload(
-      { id: editingLogId, title, content, project: metadataProject, type, tags, status, isPublic },
+      { id: editingLogId, title, content, project: metadataProject, type, tags, status, isPublic, images },
       { successMessage: isEditing ? '저장되었습니다.' : '저장되었습니다. 이어서 정리해보세요.' },
     )
+    resetDetailImages()
+    detailImageUrls = logImages(log)
     editingLogId = null
     selectedLogId = log?.id || null
 
@@ -1709,6 +1931,7 @@ window.createBossaLog = async function () {
       document.querySelector('#logContent').value = ''
       document.querySelector('#logProject').value = ''
       captureTypePreset = ''
+      resetCaptureImages()
       metadataEditingLogId = log?.id || null
       organizingLogId = log?.id || null
       completionLogId = null

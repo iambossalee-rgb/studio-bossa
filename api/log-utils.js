@@ -21,10 +21,13 @@ function getSelect(prop) { return prop?.select?.name || '' }
 function getMultiSelect(prop) { return prop?.multi_select?.map(option => option.name) || [] }
 function getDate(prop) { return prop?.date?.start || '' }
 function getCheckbox(prop) { return Boolean(prop?.checkbox) }
+function getFileUrl(file) { return file?.type === 'file' ? file.file?.url || '' : file?.external?.url || '' }
+function getFiles(prop) { return prop?.files?.map(getFileUrl).filter(Boolean) || [] }
 
 export function toLog(page) {
   const props = page.properties
   const content = getText(props['본문'])
+  const images = getFiles(props['대표이미지'])
 
   return {
     id: page.id,
@@ -37,5 +40,7 @@ export function toLog(page) {
     status: getSelect(props['상태']),
     date: getDate(props['날짜']),
     isPublic: getCheckbox(props['공개']),
+    images,
+    image: images[0] || '',
   }
 }

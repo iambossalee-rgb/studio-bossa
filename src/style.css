@@ -795,6 +795,13 @@ a{
   padding: 10px 14px;
 }
 
+.wb-detail-actions a {
+  border: 1px solid #151515;
+  color: #151515;
+  padding: 10px 14px;
+  text-align: center;
+}
+
 .wb-detail-actions button:last-child {
   background: #111;
   color: white;
@@ -1115,6 +1122,7 @@ a{
   margin-top: 20px;
   color: #333;
   line-height: 1.8;
+  counter-reset: project-doc-number;
 }
 
 .wb-project-document h1,
@@ -1155,7 +1163,19 @@ a{
 .wb-project-document img {
   display: block;
   width: 100%;
+  max-height: min(560px, 62vh);
+  object-fit: contain;
+  object-position: center;
+  background: #f3efe7;
   border: 1px solid #d8d1c5;
+}
+
+.wb-project-doc-numbered {
+  counter-increment: project-doc-number;
+}
+
+.wb-project-doc-numbered::before {
+  content: counter(project-doc-number) ". ";
 }
 
 .wb-project-document figcaption {
@@ -1338,6 +1358,14 @@ a{
 
   .wb-detail-actions button {
     width: 100%;
+  }
+
+  .wb-detail-actions a {
+    width: 100%;
+  }
+
+  .wb-project-detail-modal .wb-detail-actions {
+    grid-template-columns: 1fr 1fr;
   }
 
   .wb-delete-confirm div {

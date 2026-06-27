@@ -88,6 +88,16 @@ function projectMeta(project) {
   ].filter(Boolean)
 }
 
+function projectDetailMeta(project) {
+  const tags = Array.isArray(project.tags) ? project.tags : []
+
+  return [
+    project.category || '',
+    project.status || '',
+    ...tags.map(tag => `#${tag}`),
+  ].filter(Boolean)
+}
+
 function projectCategory(project) {
   return project.category || project.type || project.tag || '기타'
 }
@@ -246,7 +256,7 @@ function renderProjectBlock(block) {
   if (block.type === 'heading_3') return `<h3>${escapeHtml(block.text)}</h3>`
   if (block.type === 'paragraph') return block.text.trim() ? `<p>${escapeHtml(block.text)}</p>` : ''
   if (block.type === 'bulleted_list_item') return `<p class="wb-project-doc-list">• ${escapeHtml(block.text)}</p>`
-  if (block.type === 'numbered_list_item') return `<p class="wb-project-doc-list">1. ${escapeHtml(block.text)}</p>`
+  if (block.type === 'numbered_list_item') return `<p class="wb-project-doc-list wb-project-doc-numbered">${escapeHtml(block.text)}</p>`
   if (block.type === 'quote') return `<blockquote>${escapeHtml(block.text)}</blockquote>`
 
   if (block.type === 'image' && block.url) {
@@ -288,7 +298,7 @@ function renderProjectDocument(project) {
 }
 
 function renderProjectDetailCard(project) {
-  const meta = projectMeta(project)
+  const meta = projectDetailMeta(project)
 
   return `
     <div class="wb-project-lightbox">
@@ -309,6 +319,7 @@ function renderProjectDetailCard(project) {
         </section>
 
         <div class="wb-detail-actions">
+          ${project.url ? `<a class="wb-notion-link" href="${escapeAttr(project.url)}" target="_blank" rel="noopener noreferrer">노션에서 열기</a>` : ''}
           <button onclick="closeProjectDetail()">닫기</button>
         </div>
       </div>

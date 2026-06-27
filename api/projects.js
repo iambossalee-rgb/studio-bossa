@@ -9,6 +9,7 @@ function text(richText = []) {
 function getTitle(prop) { return text(prop?.title) }
 function getText(prop) { return text(prop?.rich_text) }
 function getSelect(prop) { return prop?.select?.name || '' }
+function getMultiSelect(prop) { return prop?.multi_select?.map(option => option.name) || [] }
 function getNumber(prop) { return prop?.number || '' }
 function getCheckbox(prop) { return prop?.checkbox ?? true }
 
@@ -43,9 +44,13 @@ function toProject(page) {
     brand: getSelect(props['브랜드']),
     category: getSelect(props['카테고리']),
     status: getSelect(props['상태']) || getSelect(props['진행상태']),
+    tags: getMultiSelect(props['태그']).length
+      ? getMultiSelect(props['태그'])
+      : getMultiSelect(props['Tags']),
     year: getNumber(props['년도']) || getNumber(props['연도']),
     summary: getText(props['요약']),
     image,
+    url: page.url || '',
     public: getCheckbox(props['공개']),
   }
 }

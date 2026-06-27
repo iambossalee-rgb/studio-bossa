@@ -20,6 +20,7 @@ let organizingLogId = null
 let completionLogId = null
 let projectCreateLogId = null
 let selectedArchiveGroup = null
+let captureTypePreset = ''
 const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물', '글']
 const workspaceRecordTypes = ['생각', '회의', '작업']
 
@@ -467,6 +468,7 @@ function renderRelatedLogCard(log, { variant = 'timeline' } = {}) {
 function renderRelatedLogs(project, {
   section = 'logs',
   emptyTitle = '아직 기록이 없습니다.',
+  emptyBody = '',
   variant = 'timeline',
 } = {}) {
   if (relatedLogsLoadingProjectId === project.id) {
@@ -489,6 +491,7 @@ function renderRelatedLogs(project, {
       <article class="wb-empty wb-related-empty">
         <div>
           <h4>${escapeHtml(emptyTitle)}</h4>
+          ${emptyBody ? `<p>${escapeHtml(emptyBody)}</p>` : ''}
         </div>
       </article>
     `
@@ -536,6 +539,7 @@ function renderProjectIntroPanel(project, meta) {
       <h3>${escapeHtml(project.title)}</h3>
       ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
       ${renderProjectDocument(project)}
+      ${project.url ? `<a class="wb-notion-link wb-project-intro-link" href="${escapeAttr(project.url)}" target="_blank" rel="noopener noreferrer">노션에서 열기</a>` : ''}
     </section>
   `
 }
@@ -545,6 +549,7 @@ function renderProjectLogsPanel(project) {
     <section class="wb-project-workspace-panel wb-project-logs-panel" data-project-tab="logs">
       <div class="wb-section-head">
         <h3>관련 기록</h3>
+        <button onclick="quickAddProjectLog('${escapeAttr(project.id)}', '생각')">기록 추가</button>
       </div>
       <div class="wb-related-list wb-related-timeline">
         ${renderRelatedLogs(project, {
@@ -560,10 +565,15 @@ function renderProjectLogsPanel(project) {
 function renderProjectAssetsPanel(project) {
   return `
     <section class="wb-project-workspace-panel" data-project-tab="assets">
+      <div class="wb-section-head">
+        <h3>자료</h3>
+        <button onclick="quickAddProjectLog('${escapeAttr(project.id)}', '자료')">자료 추가</button>
+      </div>
       <div class="wb-related-list wb-resource-list">
         ${renderRelatedLogs(project, {
           section: 'assets',
           emptyTitle: '아직 등록된 자료가 없습니다.',
+          emptyBody: '자료 유형으로 기록하면 이곳에 모입니다.',
           variant: 'resource',
         })}
       </div>
@@ -574,10 +584,15 @@ function renderProjectAssetsPanel(project) {
 function renderProjectResultsPanel(project) {
   return `
     <section class="wb-project-workspace-panel" data-project-tab="results">
+      <div class="wb-section-head">
+        <h3>결과물</h3>
+        <button onclick="quickAddProjectLog('${escapeAttr(project.id)}', '결과물')">결과물 추가</button>
+      </div>
       <div class="wb-related-list wb-result-list">
         ${renderRelatedLogs(project, {
           section: 'results',
           emptyTitle: '아직 등록된 결과물이 없습니다.',
+          emptyBody: '결과물 유형으로 기록하면 이곳에 모입니다.',
           variant: 'result',
         })}
       </div>
@@ -654,7 +669,6 @@ function renderProjectDetailCard(project) {
         ${renderProjectWorkspacePanel(project, meta)}
 
         <div class="wb-detail-actions">
-          ${project.url ? `<a class="wb-notion-link" href="${escapeAttr(project.url)}" target="_blank" rel="noopener noreferrer">노션에서 열기</a>` : ''}
           <button onclick="closeProjectDetail()">닫기</button>
         </div>
       </div>
@@ -1130,6 +1144,7 @@ export function initWorkbench() {
 
 window.switchWorkbenchView = function (view) {
   workbenchView = view
+  if (view !== 'logs') captureTypePreset = ''
   closeLogDetail()
   closeProjectDetail()
   closeCreateProjectModal()
@@ -1303,6 +1318,28 @@ window.switchProjectTab = function (tab) {
   renderProjectDetailHost()
 }
 
+window.quickAddProjectLog = function (projectId, type = '생각') {
+  const project = bossaProjects.find(item => item.id === projectId)
+  if (!project) return
+
+  captureTypePreset = type
+  workbenchView = 'logs'
+  closeProjectDetail()
+  closeLogDetail()
+  closeCreateProjectModal()
+  renderWorkbenchView()
+
+  const projectField = document.querySelector('#logProject')
+  if (projectField) projectField.value = project.title
+
+  const titleField = document.querySelector('#logTitle')
+  const contentField = document.querySelector('#logContent')
+  if (titleField && !titleField.value) titleField.focus()
+  if (!titleField && contentField) contentField.focus()
+
+  setMessage(`${project.title}에 ${type} 기록을 추가합니다.`)
+}
+
 window.openCreateProjectModal = function (id) {
   const log = bossaLogs.find(item => item.id === id)
   if (!log) return
@@ -1459,6 +1496,7 @@ window.cancelLogEditing = function () {
   deleteConfirmLogId = null
   organizingLogId = null
   completionLogId = null
+  captureTypePreset = ''
   setMessage('')
 }
 
@@ -1564,6 +1602,7 @@ window.continueWriting = function () {
   selectedLogId = null
   metadataEditingLogId = null
   editingLogId = null
+  captureTypePreset = ''
   closeCreateProjectModal()
   renderWorkbenchLogs()
   setMessage('')
@@ -1641,7 +1680,7 @@ window.createBossaLog = async function () {
     ? document.querySelector('#detailContent')?.value.trim() || ''
     : document.querySelector('#logContent').value.trim()
   const project = document.querySelector('#logProject').value
-  const type = isEditing ? document.querySelector('#detailType')?.value.trim() || '' : ''
+  const type = isEditing ? document.querySelector('#detailType')?.value.trim() || '' : captureTypePreset
   const tags = isEditing
     ? [...new Set(parseTags(document.querySelector('#detailTags')?.value || ''))]
     : []
@@ -1669,6 +1708,7 @@ window.createBossaLog = async function () {
       document.querySelector('#logTitle').value = ''
       document.querySelector('#logContent').value = ''
       document.querySelector('#logProject').value = ''
+      captureTypePreset = ''
       metadataEditingLogId = log?.id || null
       organizingLogId = log?.id || null
       completionLogId = null

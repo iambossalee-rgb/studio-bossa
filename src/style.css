@@ -992,8 +992,21 @@ a{
 .wb-section-head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   border-bottom: 1px solid #d8d1c5;
   padding-bottom: 12px;
+}
+
+.wb-section-head button {
+  border: 1px solid #151515;
+  background: transparent;
+  color: #151515;
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .wb-list article,
@@ -1263,6 +1276,11 @@ a{
 
 .wb-project-workspace-panel {
   min-height: 220px;
+}
+
+.wb-project-intro-link {
+  display: inline-block;
+  margin-top: 14px;
 }
 
 .wb-project-document {

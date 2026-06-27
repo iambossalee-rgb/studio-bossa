@@ -20,6 +20,7 @@ let organizingLogId = null
 let completionLogId = null
 let projectCreateLogId = null
 let selectedArchiveGroup = null
+let searchQuery = ''
 let captureTypePreset = ''
 let captureImageFiles = []
 let detailImageFiles = []
@@ -257,6 +258,137 @@ function renderArchiveWorkbench() {
     <div class="wb-archive-log-list">
       ${renderArchiveLogs(archiveLogsForGroup(selectedArchiveGroup))}
     </div>
+  `
+}
+
+function normalizedSearchText(value = '') {
+  return String(value).trim().toLocaleLowerCase('ko')
+}
+
+function searchIncludes(value, query) {
+  return normalizedSearchText(value).includes(query)
+}
+
+function logSearchText(log) {
+  return [
+    log.title,
+    log.content,
+    log.preview,
+    log.project,
+    log.type,
+    log.status,
+    ...(Array.isArray(log.tags) ? log.tags : []),
+  ].filter(Boolean).join(' ')
+}
+
+function projectSearchText(project) {
+  return [
+    project.title,
+    project.summary,
+    project.description,
+    project.category,
+    project.status,
+    project.brand,
+    ...(Array.isArray(project.tags) ? project.tags : []),
+  ].filter(Boolean).join(' ')
+}
+
+function searchResults() {
+  const query = normalizedSearchText(searchQuery)
+  if (!query) return { query, logs: [], projects: [] }
+
+  return {
+    query,
+    logs: bossaLogs.filter(log => searchIncludes(logSearchText(log), query)),
+    projects: bossaProjects.filter(project => searchIncludes(projectSearchText(project), query)),
+  }
+}
+
+function renderSearchLogResult(log) {
+  const tags = Array.isArray(log.tags) ? log.tags : []
+  const meta = [
+    log.project || '',
+    log.type || '',
+    ...tags.map(tag => `#${tag}`),
+    log.status || '',
+  ].filter(Boolean)
+
+  return `
+    <article class="wb-search-result wb-search-log-result" onclick="openLogDetail('${escapeAttr(log.id)}')">
+      <time>${escapeHtml(formatDate(log.date))}</time>
+      <div>
+        <h4>${escapeHtml(log.title)}</h4>
+        <p>${escapeHtml(logPreview(log))}</p>
+        ${meta.length ? `<div class="wb-log-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+      </div>
+    </article>
+  `
+}
+
+function renderSearchProjectResult(project) {
+  const meta = projectDetailMeta(project)
+
+  return `
+    <article class="wb-search-result wb-search-project-result" onclick="openProjectDetail('${escapeAttr(project.id)}')">
+      ${renderProjectImage(project, 'wb-search-project-thumb', 'card')}
+      <div>
+        ${meta.length ? `<div class="wb-project-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+        <h4>${escapeHtml(project.title)}</h4>
+        <p>${escapeHtml(project.summary || project.category || '요약이 없습니다.')}</p>
+      </div>
+    </article>
+  `
+}
+
+function renderSearchWorkbench() {
+  const results = searchResults()
+
+  if (!results.query) {
+    return `
+      <article class="wb-empty">
+        <time>검색</time>
+        <div>
+          <h4>찾고 싶은 기록이나 프로젝트를 입력하세요.</h4>
+        </div>
+      </article>
+    `
+  }
+
+  if (!results.logs.length && !results.projects.length) {
+    return `
+      <article class="wb-empty">
+        <time>검색</time>
+        <div>
+          <h4>검색 결과가 없습니다.</h4>
+        </div>
+      </article>
+    `
+  }
+
+  return `
+    ${results.projects.length ? `
+      <section class="wb-search-section">
+        <div class="wb-section-head">
+          <h3>프로젝트</h3>
+          <small>${results.projects.length}</small>
+        </div>
+        <div class="wb-search-project-list">
+          ${results.projects.map(renderSearchProjectResult).join('')}
+        </div>
+      </section>
+    ` : ''}
+
+    ${results.logs.length ? `
+      <section class="wb-search-section">
+        <div class="wb-section-head">
+          <h3>기록</h3>
+          <small>${results.logs.length}</small>
+        </div>
+        <div class="wb-search-log-list">
+          ${results.logs.map(renderSearchLogResult).join('')}
+        </div>
+      </section>
+    ` : ''}
   `
 }
 
@@ -1089,6 +1221,7 @@ function renderLogDetailHost() {
 function renderWorkbenchLogs(logs = bossaLogs) {
   renderLogList(logs)
   renderWorkbenchArchive()
+  renderWorkbenchSearch()
   renderSidebarWorkspace()
   renderLogDetailHost()
 }
@@ -1097,6 +1230,7 @@ function renderWorkbenchView() {
   const logPanel = document.querySelector('#workbenchLogPanel')
   const projectPanel = document.querySelector('#workbenchProjectPanel')
   const archivePanel = document.querySelector('#workbenchArchivePanel')
+  const searchPanel = document.querySelector('#workbenchSearchPanel')
   const tabs = document.querySelectorAll('.wb-tab')
 
   for (const tab of tabs) {
@@ -1106,11 +1240,13 @@ function renderWorkbenchView() {
   if (logPanel) logPanel.hidden = workbenchView !== 'logs'
   if (projectPanel) projectPanel.hidden = workbenchView !== 'projects'
   if (archivePanel) archivePanel.hidden = workbenchView !== 'archive'
+  if (searchPanel) searchPanel.hidden = workbenchView !== 'search'
 }
 
 function renderWorkbenchProjects(projects = bossaProjects) {
   const list = document.querySelector('#projectList')
   if (list) list.innerHTML = renderProjectWorkbench(projects)
+  renderWorkbenchSearch()
   renderSidebarWorkspace()
   renderProjectDetailHost()
 }
@@ -1118,6 +1254,11 @@ function renderWorkbenchProjects(projects = bossaProjects) {
 function renderWorkbenchArchive() {
   const list = document.querySelector('#archiveList')
   if (list) list.innerHTML = renderArchiveWorkbench()
+}
+
+function renderWorkbenchSearch() {
+  const list = document.querySelector('#searchResults')
+  if (list) list.innerHTML = renderSearchWorkbench()
 }
 
 function renderProjectOptions() {
@@ -1277,6 +1418,7 @@ export function workbenchPage() {
           <button class="wb-tab active" data-view="logs" onclick="switchWorkbenchView('logs')">기록</button>
           <button class="wb-tab" data-view="projects" onclick="switchWorkbenchView('projects')">프로젝트</button>
           <button class="wb-tab" data-view="archive" onclick="switchWorkbenchView('archive')">모아보기</button>
+          <button class="wb-tab" data-view="search" onclick="switchWorkbenchView('search')">검색</button>
         </nav>
 
         <div id="workbenchLogPanel">
@@ -1359,6 +1501,25 @@ export function workbenchPage() {
             </article>
           </div>
         </section>
+        <section id="workbenchSearchPanel" class="wb-search" hidden>
+          <div class="wb-section-head">
+            <h3>검색</h3>
+            <small>search</small>
+          </div>
+
+          <div class="wb-search-box">
+            <input
+              id="workbenchSearchInput"
+              value="${escapeAttr(searchQuery)}"
+              placeholder="기록과 프로젝트 검색"
+              oninput="updateWorkbenchSearch(this.value)"
+            />
+          </div>
+
+          <div id="searchResults">
+            ${renderSearchWorkbench()}
+          </div>
+        </section>
         <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         <div id="projectDetailHost"></div>
         <div id="createProjectHost"></div>
@@ -1393,6 +1554,17 @@ window.switchWorkbenchView = function (view) {
   if (view === 'archive') {
     renderWorkbenchArchive()
   }
+
+  if (view === 'search') {
+    if (!bossaProjectsLoaded) loadWorkbenchProjects()
+    renderWorkbenchSearch()
+    document.querySelector('#workbenchSearchInput')?.focus()
+  }
+}
+
+window.updateWorkbenchSearch = function (value) {
+  searchQuery = value || ''
+  renderWorkbenchSearch()
 }
 
 window.handleProjectImageError = function (img) {

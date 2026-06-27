@@ -1167,13 +1167,90 @@ a{
 }
 
 .wb-projects,
-.wb-archive {
+.wb-archive,
+.wb-search {
   margin-top: 28px;
 }
 
 #projectList,
-#archiveList {
+#archiveList,
+#searchResults {
   margin-top: 18px;
+}
+
+.wb-search-box {
+  margin-top: 18px;
+}
+
+.wb-search-box input {
+  width: 100%;
+  border: 1px solid #151515;
+  background: #fffdf8;
+  color: #151515;
+  padding: 16px 18px;
+  font: inherit;
+  font-size: 24px;
+  letter-spacing: -.035em;
+}
+
+.wb-search-section {
+  margin-top: 28px;
+}
+
+.wb-search-log-list,
+.wb-search-project-list {
+  display: grid;
+  gap: 0;
+}
+
+.wb-search-result {
+  cursor: pointer;
+}
+
+.wb-search-log-result {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 22px;
+  padding: 22px 0;
+  border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-search-project-result {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-search-project-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #f3efe7;
+  border: 1px solid #d8d1c5;
+}
+
+.wb-search-result h4 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  letter-spacing: -.055em;
+}
+
+.wb-search-result p {
+  margin: 0;
+  color: #555;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wb-search-log-result time {
+  color: #777;
+  font-size: 13px;
 }
 
 .wb-project-category-menu,
@@ -1656,7 +1733,7 @@ a{
   .wb-tabs {
     max-width: none;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .wb-tab {
@@ -1789,6 +1866,22 @@ a{
 
   .wb-project-card-list {
     grid-template-columns: 1fr;
+  }
+
+  .wb-search-box input {
+    font-size: 20px;
+    padding: 14px;
+  }
+
+  .wb-search-log-result,
+  .wb-search-project-result {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .wb-search-project-thumb,
+  .wb-search-project-result .wb-project-image-placeholder-card {
+    max-width: 220px;
   }
 
   .wb-project-category-menu span,

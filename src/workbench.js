@@ -19,6 +19,8 @@ let relatedLogsLoadingProjectId = null
 let organizingLogId = null
 let completionLogId = null
 let projectCreateLogId = null
+const coreLogTypes = ['생각', '회의', '작업', '자료', '결과물']
+const workspaceRecordTypes = ['생각', '회의', '작업']
 
 function escapeHtml(text = '') {
   return String(text)
@@ -201,11 +203,51 @@ function currentProject() {
   return bossaProjects.find(project => project.id === selectedProjectId) || null
 }
 
-function relatedLogCount(project) {
-  return relatedLogsByProject[project.id]?.length || 0
+function mergedOptionList(items = [], requiredNames = []) {
+  const merged = []
+
+  for (const name of requiredNames) {
+    if (name && !merged.some(item => item.name === name)) {
+      merged.push({ name })
+    }
+  }
+
+  for (const item of items) {
+    if (item?.name && !merged.some(option => option.name === item.name)) {
+      merged.push(item)
+    }
+  }
+
+  return merged
 }
 
-function renderRelatedLogCard(log) {
+function relatedProjectLogs(project) {
+  return relatedLogsByProject[project.id] || []
+}
+
+function projectLogsForSection(project, section) {
+  const logs = relatedProjectLogs(project)
+
+  if (section === 'assets') {
+    return logs.filter(log => log.type === '자료')
+  }
+
+  if (section === 'results') {
+    return logs.filter(log => log.type === '결과물')
+  }
+
+  return logs.filter(log => !['자료', '결과물'].includes(log.type) || workspaceRecordTypes.includes(log.type))
+}
+
+function projectSectionCounts(project) {
+  return {
+    logs: projectLogsForSection(project, 'logs').length,
+    assets: projectLogsForSection(project, 'assets').length,
+    results: projectLogsForSection(project, 'results').length,
+  }
+}
+
+function renderRelatedLogCard(log, { variant = 'timeline' } = {}) {
   const tags = Array.isArray(log.tags) ? log.tags : []
   const meta = [
     log.type || '',
@@ -213,8 +255,32 @@ function renderRelatedLogCard(log) {
     log.status || '',
   ].filter(Boolean)
 
+  if (variant === 'resource') {
+    return `
+      <article class="wb-related-log wb-related-log-resource" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+        <div>
+          <h5>${escapeHtml(log.title)}</h5>
+          <time>${escapeHtml(formatDate(log.date))}</time>
+          <p>${escapeHtml(logPreview(log))}</p>
+        </div>
+      </article>
+    `
+  }
+
+  if (variant === 'result') {
+    return `
+      <article class="wb-related-log wb-related-log-result" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+        ${log.image ? `<img src="${escapeAttr(log.image)}" alt="${escapeAttr(log.title)}" />` : ''}
+        <div>
+          <h5>${escapeHtml(log.title)}</h5>
+          <p>${escapeHtml(logPreview(log))}</p>
+        </div>
+      </article>
+    `
+  }
+
   return `
-    <article class="wb-related-log" onclick="openRelatedLog('${escapeAttr(log.id)}')">
+    <article class="wb-related-log wb-related-log-${escapeAttr(variant)}" onclick="openRelatedLog('${escapeAttr(log.id)}')">
       <time>${escapeHtml(formatDate(log.date))}</time>
       <div>
         <h5>${escapeHtml(log.title)}</h5>
@@ -225,7 +291,11 @@ function renderRelatedLogCard(log) {
   `
 }
 
-function renderRelatedLogs(project) {
+function renderRelatedLogs(project, {
+  section = 'logs',
+  emptyTitle = '아직 기록이 없습니다.',
+  variant = 'timeline',
+} = {}) {
   if (relatedLogsLoadingProjectId === project.id) {
     return `
       <article class="wb-empty">
@@ -239,28 +309,29 @@ function renderRelatedLogs(project) {
     `
   }
 
-  const relatedLogs = relatedLogsByProject[project.id] || []
+  const relatedLogs = projectLogsForSection(project, section)
 
   if (!relatedLogs.length) {
     return `
       <article class="wb-empty wb-related-empty">
         <div>
-          <h4>아직 연결된 기록이 없습니다.</h4>
-          <p>기록을 남길 때 이 프로젝트를 선택하면 이곳에 모입니다.</p>
+          <h4>${escapeHtml(emptyTitle)}</h4>
         </div>
       </article>
     `
   }
 
-  return relatedLogs.map(renderRelatedLogCard).join('')
+  return relatedLogs.map(log => renderRelatedLogCard(log, { variant })).join('')
 }
 
 function renderProjectSummaryStrip(project) {
+  const counts = projectSectionCounts(project)
+
   return `
     <div class="wb-project-summary-strip">
-      <span>기록 ${relatedLogCount(project)}</span>
-      <span>자료 0</span>
-      <span>결과물 0</span>
+      <span>기록 ${counts.logs}</span>
+      <span>자료 ${counts.assets}</span>
+      <span>결과물 ${counts.results}</span>
     </div>
   `
 }
@@ -285,17 +356,6 @@ function renderProjectWorkspaceTabs() {
   `
 }
 
-function renderProjectWorkspaceEmpty(title, copy) {
-  return `
-    <article class="wb-empty wb-workspace-empty">
-      <div>
-        <h4>${escapeHtml(title)}</h4>
-        <p>${escapeHtml(copy)}</p>
-      </div>
-    </article>
-  `
-}
-
 function renderProjectIntroPanel(project, meta) {
   return `
     <section class="wb-project-workspace-panel" data-project-tab="intro">
@@ -314,7 +374,39 @@ function renderProjectLogsPanel(project) {
         <h3>관련 기록</h3>
       </div>
       <div class="wb-related-list wb-related-timeline">
-        ${renderRelatedLogs(project)}
+        ${renderRelatedLogs(project, {
+          section: 'logs',
+          emptyTitle: '아직 기록이 없습니다.',
+          variant: 'timeline',
+        })}
+      </div>
+    </section>
+  `
+}
+
+function renderProjectAssetsPanel(project) {
+  return `
+    <section class="wb-project-workspace-panel" data-project-tab="assets">
+      <div class="wb-related-list wb-resource-list">
+        ${renderRelatedLogs(project, {
+          section: 'assets',
+          emptyTitle: '아직 등록된 자료가 없습니다.',
+          variant: 'resource',
+        })}
+      </div>
+    </section>
+  `
+}
+
+function renderProjectResultsPanel(project) {
+  return `
+    <section class="wb-project-workspace-panel" data-project-tab="results">
+      <div class="wb-related-list wb-result-list">
+        ${renderRelatedLogs(project, {
+          section: 'results',
+          emptyTitle: '아직 등록된 결과물이 없습니다.',
+          variant: 'result',
+        })}
       </div>
     </section>
   `
@@ -323,27 +415,9 @@ function renderProjectLogsPanel(project) {
 function renderProjectWorkspacePanel(project, meta) {
   if (selectedProjectTab === 'logs') return renderProjectLogsPanel(project)
 
-  if (selectedProjectTab === 'assets') {
-    return `
-      <section class="wb-project-workspace-panel" data-project-tab="assets">
-        ${renderProjectWorkspaceEmpty(
-          '아직 연결된 자료가 없습니다.',
-          '이미지, PDF, 참고 링크 등을 나중에 이곳에 모을 수 있습니다.',
-        )}
-      </section>
-    `
-  }
+  if (selectedProjectTab === 'assets') return renderProjectAssetsPanel(project)
 
-  if (selectedProjectTab === 'results') {
-    return `
-      <section class="wb-project-workspace-panel" data-project-tab="results">
-        ${renderProjectWorkspaceEmpty(
-          '아직 등록된 결과물이 없습니다.',
-          '최종 로고, 책, 패키지, 페이지 등을 이곳에 정리할 수 있습니다.',
-        )}
-      </section>
-    `
-  }
+  if (selectedProjectTab === 'results') return renderProjectResultsPanel(project)
 
   return renderProjectIntroPanel(project, meta)
 }
@@ -496,7 +570,7 @@ function renderLogDetailCard(log) {
         ${completionState}
         <div class="wb-detail-fields" ${completionState ? 'hidden' : ''}>
           <input id="detailProject" list="logProjectOptions" value="${escapeAttr(log.project || '')}" placeholder="프로젝트" ${editLock} />
-          <input id="detailType" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
+          <input id="detailType" list="logTypeOptions" value="${escapeAttr(log.type || '')}" placeholder="유형" ${editLock} />
           <input id="detailTags" class="wb-tag-input" value="${escapeAttr((log.tags || []).join(', '))}" placeholder="태그, 쉼표로 구분" ${editLock} />
           <select id="detailStatus" ${editLock}>
             ${renderStatusOptions(log.status || '작업중')}
@@ -625,7 +699,7 @@ function renderWorkbenchProjects(projects = bossaProjects) {
 
 function renderProjectOptions() {
   renderDatalist('#logProjectOptions', bossaProjectOptions)
-  renderDatalist('#logTypeOptions', bossaTypeOptions)
+  renderDatalist('#logTypeOptions', mergedOptionList(bossaTypeOptions, coreLogTypes))
   renderDatalist('#logTagOptions', bossaTagOptions)
 }
 
@@ -942,7 +1016,7 @@ window.loadProjectOptions = async function () {
     }
 
     bossaProjectOptions = result.projects || []
-    bossaTypeOptions = result.types || []
+    bossaTypeOptions = mergedOptionList(result.types || [], coreLogTypes)
     bossaTagOptions = result.tags || []
     renderProjectOptions()
   } catch (error) {

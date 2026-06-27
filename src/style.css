@@ -1271,6 +1271,43 @@ a{
   border: 1px solid #151515;
 }
 
+.wb-resource-list,
+.wb-result-list {
+  display: grid;
+  gap: 12px;
+}
+
+.wb-related-log-resource {
+  display: block;
+  border: 1px solid #d8d1c5;
+  padding: 16px;
+}
+
+.wb-related-log-resource time {
+  display: block;
+  margin-bottom: 8px;
+  color: #777;
+  font-size: 12px;
+}
+
+.wb-related-log-result {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) 1fr;
+  gap: 18px;
+  border: 1px solid #d8d1c5;
+  padding: 18px;
+  background: #fffdf8;
+}
+
+.wb-related-log-result img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #f3efe7;
+  border: 1px solid #d8d1c5;
+}
+
 .wb-related-log h5 {
   margin: 0 0 6px;
   font-size: 20px;
@@ -1482,6 +1519,10 @@ a{
 
   .wb-related-timeline .wb-related-log::before {
     left: -22px;
+  }
+
+  .wb-related-log-result {
+    grid-template-columns: 1fr;
   }
 
   .wb-log-summary {

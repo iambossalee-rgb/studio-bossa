@@ -1203,7 +1203,8 @@ a{
 }
 
 .wb-search-log-list,
-.wb-search-project-list {
+.wb-search-project-list,
+.wb-search-todo-list {
   display: grid;
   gap: 0;
 }
@@ -1212,12 +1213,21 @@ a{
   cursor: pointer;
 }
 
-.wb-search-log-result {
+.wb-search-log-result,
+.wb-search-todo-result {
   display: grid;
   grid-template-columns: 86px 1fr;
   gap: 22px;
   padding: 22px 0;
   border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-search-todo-result {
+  grid-template-columns: 86px 1fr auto;
+}
+
+.wb-search-todo-result.done {
+  opacity: .58;
 }
 
 .wb-search-project-result {
@@ -1253,9 +1263,18 @@ a{
   overflow: hidden;
 }
 
-.wb-search-log-result time {
+.wb-search-log-result time,
+.wb-search-todo-result time {
   color: #777;
   font-size: 13px;
+}
+
+.wb-search-todo-result em {
+  font-style: normal;
+  font-size: 12px;
+  border: 1px solid #d8d1c5;
+  padding: 6px 9px;
+  height: fit-content;
 }
 
 .wb-todo-create {
@@ -1331,6 +1350,14 @@ a{
 
 .wb-todo.done {
   opacity: .54;
+}
+
+.wb-todo.active {
+  background: #fffdf8;
+  outline: 1px solid #151515;
+  outline-offset: -1px;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .wb-todo-check {
@@ -2000,6 +2027,7 @@ a{
   }
 
   .wb-search-log-result,
+  .wb-search-todo-result,
   .wb-search-project-result {
     grid-template-columns: 1fr;
     gap: 10px;

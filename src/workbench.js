@@ -12,6 +12,7 @@ let bossaProjectsLoaded = false
 let bossaTodos = []
 let todosLoaded = false
 let todoError = ''
+let selectedTodoId = null
 let selectedProjectCategory = null
 let selectedProjectId = null
 let selectedProjectTab = 'intro'
@@ -296,14 +297,27 @@ function projectSearchText(project) {
   ].filter(Boolean).join(' ')
 }
 
+function todoSearchText(todo) {
+  return [
+    todo.title,
+    todo.detail,
+    todo.category,
+    todo.counterparty,
+    todo.priority,
+    todo.status,
+    todo.note,
+  ].filter(Boolean).join(' ')
+}
+
 function searchResults() {
   const query = normalizedSearchText(searchQuery)
-  if (!query) return { query, logs: [], projects: [] }
+  if (!query) return { query, logs: [], projects: [], todos: [] }
 
   return {
     query,
     logs: bossaLogs.filter(log => searchIncludes(logSearchText(log), query)),
     projects: bossaProjects.filter(project => searchIncludes(projectSearchText(project), query)),
+    todos: bossaTodos.filter(todo => searchIncludes(todoSearchText(todo), query)),
   }
 }
 
@@ -343,6 +357,43 @@ function renderSearchProjectResult(project) {
   `
 }
 
+function renderSearchTodoResult(todo) {
+  const meta = [
+    todo.category || '',
+    todo.counterparty || '',
+    todo.priority || '',
+    todo.status || '',
+  ].filter(Boolean)
+
+  return `
+    <article class="wb-search-result wb-search-todo-result ${todo.done ? 'done' : ''}" onclick="openTodoFromSearch('${escapeAttr(todo.id)}')">
+      <time>${escapeHtml(formatTodoDate(todo.date) || '날짜 없음')}</time>
+      <div>
+        <h4>${escapeHtml(todo.title)}</h4>
+        ${todo.detail ? `<p>${escapeHtml(todo.detail)}</p>` : ''}
+        ${meta.length ? `<div class="wb-log-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+      </div>
+      <em>${todo.done ? '완료' : '진행'}</em>
+    </article>
+  `
+}
+
+function renderSearchSection({ title, items, listClass, renderItem }) {
+  if (!items.length) return ''
+
+  return `
+    <section class="wb-search-section">
+      <div class="wb-section-head">
+        <h3>${escapeHtml(title)}</h3>
+        <small>${items.length}</small>
+      </div>
+      <div class="${escapeAttr(listClass)}">
+        ${items.map(renderItem).join('')}
+      </div>
+    </section>
+  `
+}
+
 function renderSearchWorkbench() {
   const results = searchResults()
 
@@ -351,13 +402,13 @@ function renderSearchWorkbench() {
       <article class="wb-empty">
         <time>검색</time>
         <div>
-          <h4>찾고 싶은 기록이나 프로젝트를 입력하세요.</h4>
+          <h4>찾고 싶은 기록, 프로젝트, 할일을 입력하세요.</h4>
         </div>
       </article>
     `
   }
 
-  if (!results.logs.length && !results.projects.length) {
+  if (!results.logs.length && !results.projects.length && !results.todos.length) {
     return `
       <article class="wb-empty">
         <time>검색</time>
@@ -369,29 +420,24 @@ function renderSearchWorkbench() {
   }
 
   return `
-    ${results.projects.length ? `
-      <section class="wb-search-section">
-        <div class="wb-section-head">
-          <h3>프로젝트</h3>
-          <small>${results.projects.length}</small>
-        </div>
-        <div class="wb-search-project-list">
-          ${results.projects.map(renderSearchProjectResult).join('')}
-        </div>
-      </section>
-    ` : ''}
-
-    ${results.logs.length ? `
-      <section class="wb-search-section">
-        <div class="wb-section-head">
-          <h3>기록</h3>
-          <small>${results.logs.length}</small>
-        </div>
-        <div class="wb-search-log-list">
-          ${results.logs.map(renderSearchLogResult).join('')}
-        </div>
-      </section>
-    ` : ''}
+    ${renderSearchSection({
+      title: '프로젝트',
+      items: results.projects,
+      listClass: 'wb-search-project-list',
+      renderItem: renderSearchProjectResult,
+    })}
+    ${renderSearchSection({
+      title: '기록',
+      items: results.logs,
+      listClass: 'wb-search-log-list',
+      renderItem: renderSearchLogResult,
+    })}
+    ${renderSearchSection({
+      title: '오늘할일',
+      items: results.todos,
+      listClass: 'wb-search-todo-list',
+      renderItem: renderSearchTodoResult,
+    })}
   `
 }
 
@@ -481,7 +527,7 @@ function renderTodoList() {
   }
 
   return todos.map(todo => `
-    <article class="wb-todo ${todo.done ? 'done' : ''}">
+    <article class="wb-todo ${todo.done ? 'done' : ''} ${selectedTodoId === todo.id ? 'active' : ''}" data-todo-id="${escapeAttr(todo.id)}">
       <label class="wb-todo-check">
         <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodoDone('${escapeAttr(todo.id)}', this.checked)" />
         <span>${todo.done ? '완료' : '진행'}</span>
@@ -1661,7 +1707,7 @@ export function workbenchPage() {
             <input
               id="workbenchSearchInput"
               value="${escapeAttr(searchQuery)}"
-              placeholder="기록과 프로젝트 검색"
+              placeholder="기록, 프로젝트, 오늘할일 검색"
               oninput="updateWorkbenchSearch(this.value)"
             />
           </div>
@@ -1718,6 +1764,7 @@ window.switchWorkbenchView = function (view) {
 
   if (view === 'search') {
     if (!bossaProjectsLoaded) loadWorkbenchProjects()
+    if (!todosLoaded && !todoError) loadTodos({ silent: true })
     renderWorkbenchSearch()
     document.querySelector('#workbenchSearchInput')?.focus()
   }
@@ -1976,6 +2023,7 @@ window.loadTodos = async function ({ silent = false } = {}) {
     if (!silent) setMessage(`오늘 할일 로드 실패: ${error.message}`)
   } finally {
     renderWorkbenchTodos()
+    renderWorkbenchSearch()
   }
 }
 
@@ -1994,6 +2042,7 @@ function upsertTodo(todo) {
   todosLoaded = true
   todoError = ''
   renderWorkbenchTodos()
+  renderWorkbenchSearch()
 }
 
 async function createTodoPayload(payload, { successMessage = '할일을 추가했습니다.' } = {}) {
@@ -2090,6 +2139,26 @@ window.toggleTodoDone = async function (id, done) {
     renderWorkbenchTodos()
     setTodoMessage(`업데이트 실패: ${error.message}`)
   }
+}
+
+window.openTodoFromSearch = function (id) {
+  selectedTodoId = id
+  workbenchView = 'todos'
+  closeLogDetail()
+  closeProjectDetail()
+  closeCreateProjectModal()
+  renderWorkbenchView()
+  renderWorkbenchTodos()
+
+  requestAnimationFrame(() => {
+    const target = Array.from(document.querySelectorAll('[data-todo-id]'))
+      .find(item => item.dataset.todoId === id)
+
+    target?.scrollIntoView({
+      block: 'center',
+      behavior: 'smooth',
+    })
+  })
 }
 
 window.openProjectDetail = function (id) {

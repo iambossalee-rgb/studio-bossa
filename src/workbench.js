@@ -428,6 +428,7 @@ function sortedTodos(todos = bossaTodos) {
 function renderTodoMeta(todo) {
   const meta = [
     todo.category || '',
+    todo.counterparty || '',
     todo.priority || '',
     todo.status || '',
     todo.url ? 'URL' : '',
@@ -505,6 +506,7 @@ function renderTodoWorkbench() {
       <div class="wb-todo-fields">
         <input id="todoDate" type="date" value="${escapeAttr(todayInputDate())}" />
         <input id="todoCategory" placeholder="분류" />
+        <input id="todoCounterparty" placeholder="상대" />
         <input id="todoPriority" placeholder="중요도" />
       </div>
       <button onclick="createWorkbenchTodo()">할일 추가</button>
@@ -2033,6 +2035,7 @@ window.createWorkbenchTodo = async function () {
   const detail = document.querySelector('#todoDetail')?.value.trim() || ''
   const date = document.querySelector('#todoDate')?.value || todayInputDate()
   const category = document.querySelector('#todoCategory')?.value.trim() || ''
+  const counterparty = document.querySelector('#todoCounterparty')?.value.trim() || ''
   const priority = document.querySelector('#todoPriority')?.value.trim() || ''
 
   if (!title) {
@@ -2048,6 +2051,7 @@ window.createWorkbenchTodo = async function () {
       detail,
       date,
       category,
+      counterparty,
       priority,
       done: false,
     })
@@ -2056,6 +2060,7 @@ window.createWorkbenchTodo = async function () {
     document.querySelector('#todoDetail').value = ''
     document.querySelector('#todoDate').value = todayInputDate()
     document.querySelector('#todoCategory').value = ''
+    document.querySelector('#todoCounterparty').value = ''
     document.querySelector('#todoPriority').value = ''
   } catch (error) {
     setTodoMessage(`저장 실패: ${error.message}`)

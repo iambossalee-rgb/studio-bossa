@@ -462,6 +462,7 @@ a{
   grid-template-columns: 260px 1fr;
   background: #f7f4ed;
   color: #151515;
+  min-width: 0;
 }
 
 .wb-sidebar {
@@ -584,6 +585,7 @@ a{
 
 .wb-main {
   padding: 38px 54px 70px;
+  min-width: 0;
 }
 
 .wb-top {
@@ -712,6 +714,7 @@ a{
   gap: 8px;
   max-width: 820px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 .wb-tab {
@@ -1289,12 +1292,13 @@ a{
 
 .wb-todo-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
 
 .wb-todo-fields input {
+  min-width: 0;
   border: 1px solid #d8d1c5;
   background: #fffdf8;
   padding: 10px 12px;
@@ -1318,6 +1322,11 @@ a{
   gap: 18px;
   padding: 20px 0;
   border-bottom: 1px solid #d8d1c5;
+  min-width: 0;
+}
+
+.wb-todo > div {
+  min-width: 0;
 }
 
 .wb-todo.done {
@@ -1354,6 +1363,7 @@ a{
   margin: 0;
   color: #555;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .wb-todo a {
@@ -1845,8 +1855,10 @@ a{
 
   .wb-tabs {
     max-width: none;
+    width: 100%;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
   }
 
   .wb-tab {

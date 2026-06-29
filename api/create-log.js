@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client'
-import { getLogDataSourceId, toLog } from './log-utils.js'
+import { getLogDataSourceId, toLog } from '../lib/log-utils.js'
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const RICH_TEXT_CHUNK_SIZE = 1900

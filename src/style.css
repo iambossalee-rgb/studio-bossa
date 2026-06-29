@@ -1168,13 +1168,15 @@ a{
 
 .wb-projects,
 .wb-archive,
-.wb-search {
+.wb-search,
+.wb-todos {
   margin-top: 28px;
 }
 
 #projectList,
 #archiveList,
-#searchResults {
+#searchResults,
+#todoWorkbench {
   margin-top: 18px;
 }
 
@@ -1251,6 +1253,117 @@ a{
 .wb-search-log-result time {
   color: #777;
   font-size: 13px;
+}
+
+.wb-todo-create {
+  background: #fffdf8;
+  border: 1px solid #d8d1c5;
+  padding: 20px;
+}
+
+.wb-todo-create input,
+.wb-todo-create textarea,
+.wb-todo-create button {
+  font: inherit;
+}
+
+.wb-todo-create > input,
+.wb-todo-create textarea {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.wb-todo-create > input {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.wb-todo-create textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.wb-todo-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.wb-todo-fields input {
+  border: 1px solid #d8d1c5;
+  background: #fffdf8;
+  padding: 10px 12px;
+}
+
+.wb-todo-create button {
+  margin-top: 14px;
+  background: #111;
+  color: white;
+  border: 0;
+  padding: 12px 18px;
+}
+
+.wb-todo-list {
+  margin-top: 28px;
+}
+
+.wb-todo {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 18px;
+  padding: 20px 0;
+  border-bottom: 1px solid #d8d1c5;
+}
+
+.wb-todo.done {
+  opacity: .54;
+}
+
+.wb-todo-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: #777;
+  font-size: 13px;
+}
+
+.wb-todo-check input {
+  margin-top: 3px;
+}
+
+.wb-todo time {
+  display: block;
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.wb-todo h4 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  letter-spacing: -.055em;
+}
+
+.wb-todo p,
+.wb-todo a {
+  margin: 0;
+  color: #555;
+  line-height: 1.7;
+}
+
+.wb-todo a {
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.wb-todo-note {
+  margin-top: 8px !important;
+  color: #777 !important;
 }
 
 .wb-project-category-menu,
@@ -1733,11 +1846,12 @@ a{
   .wb-tabs {
     max-width: none;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .wb-tab {
-    padding: 10px 8px;
+    padding: 9px 4px;
+    font-size: 12px;
   }
 
   .wb-write > input {
@@ -1884,6 +1998,19 @@ a{
     max-width: 220px;
   }
 
+  .wb-todo-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .wb-todo {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .wb-todo-check {
+    align-items: center;
+  }
+
   .wb-project-category-menu span,
   .wb-archive-menu span,
   .wb-project-category-head h4,
@@ -1947,8 +2074,7 @@ a{
 }
 
 #logProject {
-  flex: 1 1 100%;
-  grid-column: 1 / -1;
+  flex: 1 1 220px;
 }
 
 .wb-tag-select,

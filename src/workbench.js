@@ -9,6 +9,9 @@ let deleteConfirmLogId = null
 let workbenchView = 'logs'
 let bossaProjects = []
 let bossaProjectsLoaded = false
+let bossaTodos = []
+let todosLoaded = false
+let todoError = ''
 let selectedProjectCategory = null
 let selectedProjectId = null
 let selectedProjectTab = 'intro'
@@ -392,6 +395,134 @@ function renderSearchWorkbench() {
   `
 }
 
+function todayInputDate() {
+  return dateKey(new Date())
+}
+
+function formatTodoDate(date) {
+  if (!date) return ''
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).format(new Date(date))
+}
+
+function todoIncompleteCount() {
+  return bossaTodos.filter(todo => !todo.done).length
+}
+
+function sortedTodos(todos = bossaTodos) {
+  return [...todos].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1
+
+    const dateA = a.date || '9999-12-31'
+    const dateB = b.date || '9999-12-31'
+    if (dateA !== dateB) return dateA.localeCompare(dateB)
+
+    return (a.createdTime || '').localeCompare(b.createdTime || '')
+  })
+}
+
+function renderTodoMeta(todo) {
+  const meta = [
+    todo.category || '',
+    todo.priority || '',
+    todo.status || '',
+    todo.url ? 'URL' : '',
+  ].filter(Boolean)
+
+  return meta.length
+    ? `<div class="wb-log-meta">${meta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>`
+    : ''
+}
+
+function renderTodoList() {
+  if (todoError) {
+    return `
+      <article class="wb-empty">
+        <time>오류</time>
+        <div>
+          <h4>오늘 할일을 불러오지 못했습니다</h4>
+          <p>${escapeHtml(todoError)}</p>
+        </div>
+        <em>error</em>
+      </article>
+    `
+  }
+
+  if (!todosLoaded) {
+    return `
+      <article class="wb-empty">
+        <time>로딩</time>
+        <div>
+          <h4>오늘 할일을 불러오는 중입니다</h4>
+          <p>Notion Todo 데이터베이스에서 항목을 가져오고 있습니다.</p>
+        </div>
+        <em>load</em>
+      </article>
+    `
+  }
+
+  const todos = sortedTodos()
+
+  if (!todos.length) {
+    return `
+      <article class="wb-empty">
+        <time>오늘할일</time>
+        <div>
+          <h4>아직 할일이 없습니다.</h4>
+        </div>
+        <em>empty</em>
+      </article>
+    `
+  }
+
+  return todos.map(todo => `
+    <article class="wb-todo ${todo.done ? 'done' : ''}">
+      <label class="wb-todo-check">
+        <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodoDone('${escapeAttr(todo.id)}', this.checked)" />
+        <span>${todo.done ? '완료' : '진행'}</span>
+      </label>
+      <div>
+        <time>${escapeHtml(formatTodoDate(todo.date) || '날짜 없음')}</time>
+        <h4>${escapeHtml(todo.title)}</h4>
+        ${todo.detail ? `<p>${escapeHtml(todo.detail)}</p>` : ''}
+        ${todo.url ? `<a href="${escapeAttr(todo.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(todo.url)}</a>` : ''}
+        ${todo.note ? `<p class="wb-todo-note">${escapeHtml(todo.note)}</p>` : ''}
+        ${renderTodoMeta(todo)}
+      </div>
+    </article>
+  `).join('')
+}
+
+function renderTodoWorkbench() {
+  return `
+    <section class="wb-todo-create">
+      <input id="todoTitle" placeholder="할일" />
+      <textarea id="todoDetail" placeholder="세부내용"></textarea>
+      <div class="wb-todo-fields">
+        <input id="todoDate" type="date" value="${escapeAttr(todayInputDate())}" />
+        <input id="todoCategory" placeholder="분류" />
+        <input id="todoPriority" placeholder="중요도" />
+      </div>
+      <button onclick="createWorkbenchTodo()">할일 추가</button>
+      <p id="todoMessage" class="wb-message"></p>
+    </section>
+
+    <section class="wb-todo-list">
+      <div class="wb-section-head">
+        <h3>할일 목록</h3>
+        <small>${todoIncompleteCount()} open</small>
+      </div>
+      <div id="todoList">
+        ${renderTodoList()}
+      </div>
+    </section>
+  `
+}
+
 function todayLogsCount() {
   const today = dateKey(new Date())
   return bossaLogs.filter(log => dateKey(log.date) === today).length
@@ -438,6 +569,10 @@ function renderSidebarWorkspace() {
           <div>
             <dt>오늘 기록</dt>
             <dd>${todayCount}</dd>
+          </div>
+          <div>
+            <dt>오늘할일</dt>
+            <dd>${todoIncompleteCount()}</dd>
           </div>
           <div>
             <dt>프로젝트</dt>
@@ -1231,6 +1366,7 @@ function renderWorkbenchView() {
   const projectPanel = document.querySelector('#workbenchProjectPanel')
   const archivePanel = document.querySelector('#workbenchArchivePanel')
   const searchPanel = document.querySelector('#workbenchSearchPanel')
+  const todoPanel = document.querySelector('#workbenchTodoPanel')
   const tabs = document.querySelectorAll('.wb-tab')
 
   for (const tab of tabs) {
@@ -1241,6 +1377,7 @@ function renderWorkbenchView() {
   if (projectPanel) projectPanel.hidden = workbenchView !== 'projects'
   if (archivePanel) archivePanel.hidden = workbenchView !== 'archive'
   if (searchPanel) searchPanel.hidden = workbenchView !== 'search'
+  if (todoPanel) todoPanel.hidden = workbenchView !== 'todos'
 }
 
 function renderWorkbenchProjects(projects = bossaProjects) {
@@ -1259,6 +1396,12 @@ function renderWorkbenchArchive() {
 function renderWorkbenchSearch() {
   const list = document.querySelector('#searchResults')
   if (list) list.innerHTML = renderSearchWorkbench()
+}
+
+function renderWorkbenchTodos() {
+  const panel = document.querySelector('#todoWorkbench')
+  if (panel) panel.innerHTML = renderTodoWorkbench()
+  renderSidebarWorkspace()
 }
 
 function renderProjectOptions() {
@@ -1419,6 +1562,7 @@ export function workbenchPage() {
           <button class="wb-tab" data-view="projects" onclick="switchWorkbenchView('projects')">프로젝트</button>
           <button class="wb-tab" data-view="archive" onclick="switchWorkbenchView('archive')">모아보기</button>
           <button class="wb-tab" data-view="search" onclick="switchWorkbenchView('search')">검색</button>
+          <button class="wb-tab" data-view="todos" onclick="switchWorkbenchView('todos')">오늘할일</button>
         </nav>
 
         <div id="workbenchLogPanel">
@@ -1428,6 +1572,10 @@ export function workbenchPage() {
 
             <div class="wb-field-row">
               <input id="logProject" list="logProjectOptions" placeholder="프로젝트" />
+              <select id="captureDestination" aria-label="저장 위치">
+                <option value="log">기록</option>
+                <option value="todo">오늘할일</option>
+              </select>
               <datalist id="logProjectOptions"></datalist>
               <datalist id="logTypeOptions"></datalist>
               <datalist id="logTagOptions"></datalist>
@@ -1520,6 +1668,16 @@ export function workbenchPage() {
             ${renderSearchWorkbench()}
           </div>
         </section>
+        <section id="workbenchTodoPanel" class="wb-todos" hidden>
+          <div class="wb-section-head">
+            <h3>오늘할일</h3>
+            <small>todo</small>
+          </div>
+
+          <div id="todoWorkbench">
+            ${renderTodoWorkbench()}
+          </div>
+        </section>
         <div id="logDetailHost">${renderSelectedLogDetail()}</div>
         <div id="projectDetailHost"></div>
         <div id="createProjectHost"></div>
@@ -1535,6 +1693,7 @@ export function initWorkbench() {
   loadBossaLogs()
   loadProjectOptions()
   loadWorkbenchProjects()
+  loadTodos({ silent: true })
 }
 
 window.switchWorkbenchView = function (view) {
@@ -1559,6 +1718,11 @@ window.switchWorkbenchView = function (view) {
     if (!bossaProjectsLoaded) loadWorkbenchProjects()
     renderWorkbenchSearch()
     document.querySelector('#workbenchSearchInput')?.focus()
+  }
+
+  if (view === 'todos') {
+    renderWorkbenchTodos()
+    if (!todosLoaded && !todoError) loadTodos()
   }
 }
 
@@ -1775,6 +1939,151 @@ window.loadWorkbenchProjects = async function ({ force = false } = {}) {
         </article>
       `
     }
+  }
+}
+
+window.loadTodos = async function ({ silent = false } = {}) {
+  const list = document.querySelector('#todoList')
+
+  if (list && !silent) {
+    list.innerHTML = `
+      <article class="wb-empty">
+        <time>로딩</time>
+        <div>
+          <h4>오늘 할일을 불러오는 중입니다</h4>
+          <p>Notion Todo 데이터베이스에서 항목을 가져오고 있습니다.</p>
+        </div>
+        <em>load</em>
+      </article>
+    `
+  }
+
+  try {
+    const response = await fetch('/api/todos')
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '오늘 할일을 불러오지 못했습니다')
+    }
+
+    bossaTodos = result.todos || []
+    todosLoaded = true
+    todoError = ''
+  } catch (error) {
+    todoError = error.message
+    if (!silent) setMessage(`오늘 할일 로드 실패: ${error.message}`)
+  } finally {
+    renderWorkbenchTodos()
+  }
+}
+
+function setTodoMessage(text) {
+  const message = document.querySelector('#todoMessage')
+  if (message) message.textContent = text
+}
+
+function upsertTodo(todo) {
+  if (!todo?.id) return
+
+  bossaTodos = [
+    todo,
+    ...bossaTodos.filter(item => item.id !== todo.id),
+  ]
+  todosLoaded = true
+  todoError = ''
+  renderWorkbenchTodos()
+}
+
+async function createTodoPayload(payload, { successMessage = '할일을 추가했습니다.' } = {}) {
+  const response = await fetch('/api/create-todo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const result = await readApiResponse(response)
+
+  if (!result.ok) {
+    throw new Error(result.error || '할일 저장 실패')
+  }
+
+  upsertTodo(result.todo)
+  await loadTodos({ silent: true })
+  setTodoMessage(successMessage)
+
+  return result.todo
+}
+
+async function createTodoFromCapture({ title, content }) {
+  const todoTitle = title || content.split('\n').find(line => line.trim())?.trim() || ''
+
+  if (!todoTitle) {
+    throw new Error('할일 제목을 입력해주세요.')
+  }
+
+  return createTodoPayload({
+    title: todoTitle,
+    detail: content,
+    date: todayInputDate(),
+    done: false,
+  }, { successMessage: '오늘 할일에 추가했습니다.' })
+}
+
+window.createWorkbenchTodo = async function () {
+  const title = document.querySelector('#todoTitle')?.value.trim() || ''
+  const detail = document.querySelector('#todoDetail')?.value.trim() || ''
+  const date = document.querySelector('#todoDate')?.value || todayInputDate()
+  const category = document.querySelector('#todoCategory')?.value.trim() || ''
+  const priority = document.querySelector('#todoPriority')?.value.trim() || ''
+
+  if (!title) {
+    setTodoMessage('할일을 입력해주세요.')
+    return
+  }
+
+  setTodoMessage('저장 중...')
+
+  try {
+    await createTodoPayload({
+      title,
+      detail,
+      date,
+      category,
+      priority,
+      done: false,
+    })
+
+    document.querySelector('#todoTitle').value = ''
+    document.querySelector('#todoDetail').value = ''
+    document.querySelector('#todoDate').value = todayInputDate()
+    document.querySelector('#todoCategory').value = ''
+    document.querySelector('#todoPriority').value = ''
+  } catch (error) {
+    setTodoMessage(`저장 실패: ${error.message}`)
+  }
+}
+
+window.toggleTodoDone = async function (id, done) {
+  const previousTodos = bossaTodos
+  bossaTodos = bossaTodos.map(todo => todo.id === id ? { ...todo, done } : todo)
+  renderWorkbenchTodos()
+
+  try {
+    const response = await fetch('/api/update-todo', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, done }),
+    })
+    const result = await readApiResponse(response)
+
+    if (!result.ok) {
+      throw new Error(result.error || '할일 업데이트 실패')
+    }
+
+    upsertTodo(result.todo)
+  } catch (error) {
+    bossaTodos = previousTodos
+    renderWorkbenchTodos()
+    setTodoMessage(`업데이트 실패: ${error.message}`)
   }
 }
 
@@ -2191,9 +2500,29 @@ window.createBossaLog = async function () {
   const isPublic = isEditing ? Boolean(document.querySelector('#detailPublic')?.checked) : false
   const metadataProject = isEditing ? document.querySelector('#detailProject')?.value || '' : project
   const message = document.querySelector('#saveMessage')
+  const captureDestination = !isEditing ? document.querySelector('#captureDestination')?.value || 'log' : 'log'
 
   if (!title && !content) {
     message.textContent = '기록할 내용을 먼저 적어주세요.'
+    return
+  }
+
+  if (!isEditing && captureDestination === 'todo') {
+    message.textContent = '오늘 할일에 저장 중...'
+
+    try {
+      await createTodoFromCapture({ title, content })
+      document.querySelector('#logTitle').value = ''
+      document.querySelector('#logContent').value = ''
+      document.querySelector('#logProject').value = ''
+      document.querySelector('#captureDestination').value = 'log'
+      captureTypePreset = ''
+      resetCaptureImages()
+      renderWorkbenchTodos()
+      message.textContent = '오늘 할일에 추가했습니다.'
+    } catch (error) {
+      message.textContent = `저장 실패: ${error.message}`
+    }
     return
   }
 
